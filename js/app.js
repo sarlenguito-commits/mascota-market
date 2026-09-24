@@ -35,7 +35,7 @@ const estado = {
     formPedidos: null,        // { fecha, pide, llega, nota } mientras Agustina cambia un día
     filtroPedidos: null,
     buscarPedidos: "",
-    formPedido: { cliente: "", telefono: "", producto: "", cantidad: "1", pago: "", pagoEstado: "nada", sena: "", nota: "", local: "" },
+    formPedido: { cliente: "", telefono: "", producto: "", cantidad: "1", pago: "", pagoEstado: "nada", sena: "", total: "", nota: "", local: "" },
     filtroHistorial: "entregado", // historial de pedidos (Agustina): entregado | cancelado
     buscarHistorial: "",
     pedidoEditando: null,
@@ -384,7 +384,7 @@ function conectarEventos() {
     on("[data-filtro-pedidos]", "click", (el) => { estado.filtroPedidos = el.dataset.filtroPedidos; render(); });
     on("[data-buscar-pedidos]", "input", (el) => { estado.buscarPedidos = el.value; render(); });
     // "¿Pagó algo?" muestra u oculta el monto de la seña
-    on("[data-pedido-campo=pagoEstado], [data-edicion-pedido-campo=pagoEstado]", "change", () => render());
+    on("[data-pedido-campo=pagoEstado], [data-edicion-pedido-campo=pagoEstado]", "change", () => render()); // muestra el monto de la seña o del total
     on("[data-filtro-historial]", "click", (el) => { estado.filtroHistorial = el.dataset.filtroHistorial; render(); });
     on("[data-buscar-historial]", "input", (el) => { estado.buscarHistorial = el.value; render(); });
 
@@ -1662,7 +1662,9 @@ const ESTADOS_PEDIDO = {
 const PAGO_ESTADOS = [["nada", "Todavía no pagó"], ["sena", "Dejó seña"], ["total", "Pagó el total"]];
 const pesos = (n) => `$ ${Number(n || 0).toLocaleString("es-AR")}`;
 
-const formPedidoVacio = (local = "") => ({ cliente: "", telefono: "", producto: "", cantidad: "1", pago: "", pagoEstado: "nada", sena: "", nota: "", local });
+const formPedidoVacio = (local = "") => ({ cliente: "", telefono: "", producto: "", cantidad: "1", pago: "", pagoEstado: "nada", sena: "", total: "", nota: "", local });
+// "5.000" → 5000 (los montos se escriben con puntos de miles)
+const leerPesos = (texto) => Number(String(texto || "").replace(/\D/g, "")) || 0;
 const buscarPedido = (id) => estado.pedidosClientes.find((x) => x.id === id);
 
 // Campos del formulario (sirve para cargar uno nuevo y para editar). "prefijo" separa los dos formularios.
@@ -1698,6 +1700,10 @@ function camposPedido(f, prefijo) {
             ${f.pagoEstado === "sena" ? `
             <label>Monto de la seña
                 <input ${campo}="sena" data-foco="${prefijo}-sena" inputmode="numeric" maxlength="12" value="${esc(f.sena)}" placeholder="Ej: 5.000">
+            </label>` : ""}
+            ${f.pagoEstado === "total" ? `
+            <label>Monto total
+                <input ${campo}="total" data-foco="${prefijo}-total" inputmode="numeric" maxlength="12" value="${esc(f.total)}" placeholder="Ej: 48.500">
             </label>` : ""}
         </div>
         <label>Forma de pago
@@ -1735,7 +1741,7 @@ function tarjetaPedidoCliente(x) {
         entregado: `<button class="boton boton--chico boton--suave" data-pedido-estado="${x.id}" data-valor="llego">↩️ Deshacer entrega</button>`,
         cancelado: `<button class="boton boton--chico boton--suave" data-pedido-estado="${x.id}" data-valor="pendiente">↩️ Volver a pendiente</button>`
     }[x.estado] || "";
-    const pagoTexto = { total: "Pagó el total", sena: `Dejó seña${x.sena ? ` de ${pesos(x.sena)}` : ""}`, nada: "Todavía no pagó" }[x.pagoEstado || "nada"];
+    const pagoTexto = { total: `Pagó el total${x.total ? ` (${pesos(x.total)})` : ""}`, sena: `Dejó seña${x.sena ? ` de ${pesos(x.sena)}` : ""}`, nada: "Todavía no pagó" }[x.pagoEstado || "nada"];
     const quien = esc(nombre(x.quien || x.persona));
     const cierre = x.estado === "entregado" ? ` · entregó ${quien}, ${diaCorto(x.entregadoEn || x.actualizado)} ${hora(x.entregadoEn || x.actualizado)}`
         : x.estado === "cancelado" ? ` · canceló ${quien}, ${diaCorto(x.canceladoEn || x.actualizado)}` : "";
@@ -1812,7 +1818,8 @@ function leerFormPedido(f) {
         cliente: f.cliente.trim(), telefono: f.telefono.trim(), producto: f.producto.trim(),
         cantidad, pago: f.pago || "", nota: f.nota.trim(), local: f.local,
         pagoEstado: f.pagoEstado || "nada",
-        sena: f.pagoEstado === "sena" ? Number(String(f.sena).replace(/\D/g, "")) || 0 : 0
+        sena: f.pagoEstado === "sena" ? leerPesos(f.sena) : 0,
+        total: f.pagoEstado === "total" ? leerPesos(f.total) : 0
     };
     if (!datosPedido.producto) return aviso("Escribí el producto"), null;
     if (!datosPedido.cliente) return aviso("Escribí el nombre del cliente"), null;
@@ -1836,14 +1843,14 @@ function editarPedido(id) {
     const x = buscarPedido(id);
     if (!x) return;
     estado.pedidoEditando = id;
-    estado.edicionPedido = { ...formPedidoVacio(x.local), ...x, cantidad: String(x.cantidad ?? 1), pagoEstado: x.pagoEstado || "nada", sena: x.sena ? String(x.sena) : "" };
+    estado.edicionPedido = { ...formPedidoVacio(x.local), ...x, cantidad: String(x.cantidad ?? 1), pagoEstado: x.pagoEstado || "nada", sena: x.sena ? Number(x.sena).toLocaleString("es-AR") : "", total: x.total ? Number(x.total).toLocaleString("es-AR") : "" };
     render();
 }
 
 // Guarda el pedido completo con los cambios (el documento se reemplaza entero).
 async function guardarPedido(x, cambios) {
     const { uid, ...resto } = x;
-    await datos.guardarEn("pedidosClientes", { pagoEstado: "nada", sena: 0, ...resto, ...cambios, quien: estado.persona, actualizado: cal.ahora().toISOString() });
+    await datos.guardarEn("pedidosClientes", { pagoEstado: "nada", sena: 0, total: 0, ...resto, ...cambios, quien: estado.persona, actualizado: cal.ahora().toISOString() });
 }
 
 async function guardarEdicionPedido() {
