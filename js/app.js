@@ -2,7 +2,7 @@
 // Interfaz: login, bienvenida, hoy (3 momentos), cambio de turno, calendario por semanas,
 // glosario, locales y, para Agustina, actividad, informes, tareas y bloc de notas.
 // ============================================
-import { PERSONAS, LOCALES, CLAVE_EQUIPO_PRUEBA, MINUTOS_BLOQUEO, STOCK_BASE, PEDIDOS } from "./config.js";
+import { PERSONAS, LOCALES, CLAVE_EQUIPO_PRUEBA, MINUTOS_BLOQUEO, PEDIDOS, FORMAS_PAGO } from "./config.js";
 import * as cal from "./calendario.js";
 import * as datos from "./datos.js";
 
@@ -30,14 +30,14 @@ const estado = {
     filtroMuro: "todos",      // muro de actividad de Agustina: todos | diagonal | rivadavia
     animar: true,             // animación de entrada: solo al cambiar de pantalla
     recien: null,             // tarea recién marcada (animación del tilde)
-    stock: [],                // productos guardados (cantidades y agregados desde la app)
+    pedidosClientes: [],      // pedidos que hacen los clientes en el local
     pedidosDia: [],           // cambios de Agustina a los pedidos de un día
     formPedidos: null,        // { fecha, pide, llega, nota } mientras Agustina cambia un día
-    filtroStock: null,
-    buscarStock: "",
-    formStock: { nombre: "", local: "", cantidad: "", minimo: "", unidad: "unidades" },
-    stockEditando: null,
-    edicionStock: {},
+    filtroPedidos: null,
+    buscarPedidos: "",
+    formPedido: { cliente: "", telefono: "", producto: "", cantidad: "1", pago: "", nota: "", local: "" },
+    pedidoEditando: null,
+    edicionPedido: {},
     escuchando: false
 };
 
@@ -78,7 +78,7 @@ const iniciar = () => datos.escucharSesion((persona) => {
         });
         datos.escucharColeccion("notasTurno", (lista) => { estado.notasTurno = lista; render(); });
         datos.escucharColeccion("agenda", (lista) => { estado.agenda = lista; render(); });
-        datos.escucharColeccion("stock", (lista) => { estado.stock = lista; render(); });
+        datos.escucharColeccion("pedidosClientes", (lista) => { estado.pedidosClientes = lista; render(); });
         datos.escucharColeccion("pedidosDia", (lista) => { estado.pedidosDia = lista; render(); });
         // El bloc de notas es privado: solo Agustina lo lee.
         if (PERSONAS[persona]?.rol === "duena") {
@@ -248,9 +248,9 @@ function alternarTema() {
 // ---------- Navegación (barra de abajo en el celular) ----------
 
 // [vista, ícono (Tabler), texto]
-const NAV_EMPLEADA = [["hoy", "sun", "Hoy"], ["turno", "arrows-exchange", "Turno"], ["calendario", "calendar", "Calendario"], ["glosario", "book", "Glosario"], ["locales", "building-store", "Locales"], ["stock", "package", "Pedidos/<wbr>Stock"]];
+const NAV_EMPLEADA = [["hoy", "sun", "Hoy"], ["turno", "arrows-exchange", "Turno"], ["calendario", "calendar", "Calendario"], ["glosario", "book", "Glosario"], ["locales", "building-store", "Locales"], ["pedidos", "truck", "Pedidos"]];
 const NAV_DUENA = [["actividad", "activity", "Actividad"], ["tareas", "clipboard-plus", "Tareas"], ["calendario", "calendar", "Calendario"], ["notas", "notes", "Notas"], ["mas", "dots", "Más"]];
-const MAS_DUENA = [["informes", "chart-bar", "Informes"], ["turno", "arrows-exchange", "Cambio de turno"], ["locales", "building-store", "Locales"], ["glosario", "book", "Glosario"], ["stock", "package", "Pedidos / Stock"]];
+const MAS_DUENA = [["informes", "chart-bar", "Informes"], ["turno", "arrows-exchange", "Cambio de turno"], ["locales", "building-store", "Locales"], ["glosario", "book", "Glosario"], ["pedidos", "truck", "Pedidos"]];
 // El menú "Más" es solo de Agustina (las chicas tienen todo en la barra).
 const menuMas = () => (esDuena() ? MAS_DUENA : []);
 
@@ -272,7 +272,7 @@ function render() {
     const vistas = {
         hoy: vistaHoy, turno: vistaTurno, calendario: vistaCalendario, locales: vistaLocales,
         informes: vistaInformes, tareas: vistaTareas, notas: vistaNotas, glosario: vistaGlosario,
-        actividad: vistaActividad, mas: vistaMas, stock: vistaStock
+        actividad: vistaActividad, mas: vistaMas, pedidos: vistaPedidos
     };
     const contenido = (vistas[estado.vista] || vistaHoy)();
 
@@ -368,17 +368,19 @@ function conectarEventos() {
     on("[data-agenda-campo=local]", "change", () => render());
     on("[data-borrar-agenda]", "click", (el) => borrarConConfirmacion("agenda", el.dataset.borrarAgenda, "¿Quitar esto del calendario?"));
 
-    // Stock
-    on("[data-stock-sumar]", "click", (el) => sumarStock(el.dataset.stockSumar, Number(el.dataset.cuanto)));
-    on("[data-stock-editar]", "click", (el) => editarStock(el.dataset.stockEditar));
-    on("[data-stock-cancelar]", "click", () => { estado.stockEditando = null; render(); });
-    on("[data-stock-borrar]", "click", (el) => borrarProducto(el.dataset.stockBorrar));
-    on("[data-stock-campo]", "input", (el) => { estado.formStock[el.dataset.stockCampo] = el.value; });
-    on("[data-edicion-campo]", "input", (el) => { estado.edicionStock[el.dataset.edicionCampo] = el.value; });
-    on("#form-stock", "submit", (el, e) => { e.preventDefault(); agregarProducto(); });
-    on("#form-editar-stock", "submit", (el, e) => { e.preventDefault(); guardarEdicionStock(); });
-    on("[data-filtro-stock]", "click", (el) => { estado.filtroStock = el.dataset.filtroStock; render(); });
-    on("[data-buscar-stock]", "input", (el) => { estado.buscarStock = el.value; render(); });
+    // Pedidos de clientes
+    on("[data-pedido-campo]", "input", (el) => { estado.formPedido[el.dataset.pedidoCampo] = el.value; });
+    on("[data-pedido-campo]", "change", (el) => { estado.formPedido[el.dataset.pedidoCampo] = el.value; });
+    on("[data-edicion-pedido-campo]", "input", (el) => { estado.edicionPedido[el.dataset.edicionPedidoCampo] = el.value; });
+    on("[data-edicion-pedido-campo]", "change", (el) => { estado.edicionPedido[el.dataset.edicionPedidoCampo] = el.value; });
+    on("#form-pedido", "submit", (el, e) => { e.preventDefault(); agregarPedido(); });
+    on("#form-editar-pedido", "submit", (el, e) => { e.preventDefault(); guardarEdicionPedido(); });
+    on("[data-pedido-editar]", "click", (el) => editarPedido(el.dataset.pedidoEditar));
+    on("[data-pedido-cancelar]", "click", () => { estado.pedidoEditando = null; render(); });
+    on("[data-pedido-borrar]", "click", (el) => borrarPedido(el.dataset.pedidoBorrar));
+    on("[data-pedido-estado]", "click", (el) => cambiarEstadoPedido(el.dataset.pedidoEstado, el.dataset.valor));
+    on("[data-filtro-pedidos]", "click", (el) => { estado.filtroPedidos = el.dataset.filtroPedidos; render(); });
+    on("[data-buscar-pedidos]", "input", (el) => { estado.buscarPedidos = el.value; render(); });
 
     // Pedidos del día (Agustina)
     on("[data-pedidos-editar]", "click", (el) => abrirFormPedidos(el.dataset.pedidosEditar));
@@ -659,7 +661,6 @@ function vistaHoy() {
 
     return `
     ${cabeceraHoy(hechas.length, mias.length)}
-    ${avisoPedidosHoy(hoy)}
     ${agendaHoy.length ? `
     <section class="momento">
         <h2 class="momento__titulo">📌 Tareas de Agustina</h2>
@@ -678,6 +679,7 @@ function vistaHoy() {
         ${grupo("Pasadas para otro día", pospuestas)}
         ${grupo("Hechas", hechas)}
     </section>
+    ${avisoPedidosHoy(hoy)}
     <button class="boton boton--suave boton--grande" data-ir="turno">🔄 Dejar nota de turno</button>`;
 }
 
@@ -1520,20 +1522,7 @@ function vistaMas() {
 }
 
 
-// ---------- Vista: Pedidos / Stock (todas pueden cargar y modificar el stock) ----------
-// Productos = los fijos de config.js (STOCK_BASE) + los agregados desde la app.
-// Las cantidades y los cambios se guardan en la colección "stock" con el mismo id.
-
-const UNIDADES = ["unidades", "bolsas", "kg", "cajas", "paquetes", "latas"];
-
-function productosStock() {
-    const guardados = Object.fromEntries(estado.stock.map((p) => [p.id, p]));
-    const base = STOCK_BASE.map((p) => ({ cantidad: 0, ...p, ...guardados[p.id], base: true }));
-    const agregados = estado.stock.filter((p) => !STOCK_BASE.some((b) => b.id === p.id));
-    return [...base, ...agregados];
-}
-
-const pocoStock = (p) => p.minimo !== null && p.minimo !== undefined && p.minimo !== "" && Number(p.cantidad) <= Number(p.minimo);
+// ---------- Vista: Pedidos (proveedores y pedidos de clientes) ----------
 
 // ---------- Pedidos a proveedores ----------
 // Lo fijo sale de config.js > PEDIDOS; Agustina puede cambiar lo de un día puntual (colección "pedidosDia", id = fecha).
@@ -1560,12 +1549,15 @@ function carteles(dia) {
 // Aviso en "Hoy" de las chicas.
 function avisoPedidosHoy(hoy) {
     const dia = pedidosDelDia(hoy);
-    if (!dia.pide && !dia.llega && !dia.nota) return "";
+    const donde = cal.dondeEsta(estado.persona, hoy);
+    const llegaron = estado.pedidosClientes.filter((x) => x.estado === "llego" && (!donde || x.local === donde.local)).length;
+    if (!dia.pide && !dia.llega && !dia.nota && !llegaron) return "";
     return `
     <section class="momento pedidos pedidos--aviso">
         <h2 class="momento__titulo">🚚 Pedidos de hoy</h2>
         ${carteles(dia)}
-        <button class="boton boton--suave" data-vista="stock">Ver pedidos y stock</button>
+        ${llegaron ? `<p class="pedidos__nota">📦 ${llegaron === 1 ? "Llegó 1 pedido de cliente: hay que avisarle." : `Llegaron ${llegaron} pedidos de clientes: hay que avisarles.`}</p>` : ""}
+        <button class="boton boton--suave" data-vista="pedidos">Ver pedidos</button>
     </section>`;
 }
 
@@ -1623,13 +1615,13 @@ async function restaurarPedidos() {
     render();
 }
 
-// Tarjeta de la sección Pedidos / Stock: lo de hoy en grande, el calendario fijo abajo.
+// Proveedores en la sección Pedidos: lo de hoy en grande, el calendario fijo abajo.
 function tarjetaPedidos(hoy) {
     const d = hoy.getDay();
     const dia = pedidosDelDia(hoy);
     return `
     <section class="pedidos">
-        <h2>🚚 Pedidos de hoy</h2>
+        <h2>🏭 Proveedores · hoy</h2>
         ${dia.pide || dia.llega || dia.nota ? carteles(dia) : `<p class="vacio">Hoy no se pide ni llega nada.</p>`}
         ${dia.cambiado ? `<p class="formulario__ayuda">✏️ Cambiado por ${esc(nombre(dia.persona))}</p>` : ""}
         ${esDuena() ? (estado.formPedidos ? formPedidos()
@@ -1650,188 +1642,211 @@ function tarjetaPedidos(hoy) {
     </section>`;
 }
 
-function vistaStock() {
-    const hoy = cal.ahora();
-    if (!estado.filtroStock) {
-        estado.filtroStock = (!esDuena() && cal.dondeEsta(estado.persona, hoy)?.local) || "todos";
-    }
-    const filtro = estado.filtroStock;
-    const normalizar = (t) => t.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
-    const buscar = normalizar(estado.buscarStock.trim());
-    const todos = productosStock();
-    const bajos = todos.filter(pocoStock).length;
-    const f = estado.formStock;
-    const filtros = [["todos", "Todos"], ...Object.entries(LOCALES).map(([id, l]) => [id, l.nombre])];
+// ---------- Pedidos de clientes ----------
+// Una clienta pide algo que no hay: se anota acá (cliente, teléfono, producto, cantidad, forma de pago)
+// y se sigue hasta que se entrega: pendiente → llegó (avisar al cliente) → entregado. Colección "pedidosClientes".
 
-    const fila = (p) => {
-        if (estado.stockEditando === p.id) return filaEdicion(p);
-        const bajo = pocoStock(p);
-        return `
-        <li class="producto ${bajo ? "is-bajo" : ""}">
-            <div class="producto__info">
-                <strong>${esc(p.nombre)}</strong>
-                <small>${esc(p.unidad || "unidades")}${p.minimo !== undefined && p.minimo !== "" && p.minimo !== null ? ` · mínimo ${esc(p.minimo)}` : ""}${p.actualizado ? ` · ${esc(nombre(p.persona))}, ${diaCorto(p.actualizado)} ${hora(p.actualizado)}` : ""}</small>
-                ${bajo ? `<span class="producto__alerta">⚠️ Poco stock</span>` : ""}
-            </div>
-            <div class="producto__contador">
-                <button class="producto__boton" data-stock-sumar="${p.id}" data-cuanto="-1" aria-label="Restar uno">−</button>
-                <span class="producto__cantidad">${esc(p.cantidad ?? 0)}</span>
-                <button class="producto__boton" data-stock-sumar="${p.id}" data-cuanto="1" aria-label="Sumar uno">+</button>
-            </div>
-            <button class="producto__editar" data-stock-editar="${p.id}" aria-label="Editar ${esc(p.nombre)}">✏️</button>
-        </li>`;
-    };
+const ESTADOS_PEDIDO = {
+    pendiente: { titulo: "⏳ Pendientes", texto: "Pendiente" },
+    llego: { titulo: "📦 Llegaron · avisar al cliente", texto: "Llegó" },
+    entregado: { titulo: "✅ Entregados", texto: "Entregado" }
+};
 
+const formPedidoVacio = (local = "") => ({ cliente: "", telefono: "", producto: "", cantidad: "1", pago: "", nota: "", local });
+const buscarPedido = (id) => estado.pedidosClientes.find((x) => x.id === id);
+
+// Campos del formulario (sirve para cargar uno nuevo y para editar). "prefijo" separa los dos formularios.
+function camposPedido(f, prefijo) {
+    const campo = `data-${prefijo}-campo`;
     return `
-    <section class="encabezado">
-        <h1>🚚 Pedidos / 📦 Stock</h1>
-        <p>Todas pueden cargar productos y actualizar cantidades con + y −. Si ponés un mínimo, avisa cuando queda poco.</p>
-        <div class="glosario__totales">
-            <span class="hoy__chip hoy__chip--fuerte">📦 ${todos.length} productos</span>
-            ${bajos ? `<span class="hoy__chip hoy__chip--alerta">⚠️ ${bajos} con poco stock</span>` : ""}
-        </div>
-        <input class="glosario__buscar" type="search" data-buscar-stock data-foco="buscar-stock"
-            value="${esc(estado.buscarStock)}" placeholder="🔎 Buscar producto">
-    </section>
-    ${tarjetaPedidos(hoy)}
-    <div class="filtros">
-        ${filtros.map(([id, txt]) => `<button class="filtros__item ${filtro === id ? "is-activo" : ""}" data-filtro-stock="${id}">${txt}</button>`).join("")}
-    </div>
-    <div class="locales">
-    ${Object.entries(LOCALES).filter(([id]) => filtro === "todos" || filtro === id).map(([id, l]) => {
-        const lista = todos.filter((p) => p.local === id && (!buscar || normalizar(p.nombre).includes(buscar)))
-            .sort((a, b) => Number(pocoStock(b)) - Number(pocoStock(a)) || a.nombre.localeCompare(b.nombre));
-        return `
-        <section class="local local--${id}">
-            <header class="local__cabecera">
-                <h2>🏪 ${l.nombre}</h2>
-                <p>${lista.length} producto${lista.length === 1 ? "" : "s"}</p>
-            </header>
-            <div class="local__cuerpo">
-                ${lista.length ? `<ul class="productos">${lista.map(fila).join("")}</ul>`
-                    : `<p class="vacio">${buscar ? "No hay productos con esa búsqueda." : "Todavía no hay productos. Agregá el primero abajo."}</p>`}
-            </div>
-        </section>`;
-    }).join("")}
-    </div>
-    <form class="formulario" id="form-stock">
-        <h2>➕ Agregar producto</h2>
         <label>Producto
-            <input data-stock-campo="nombre" data-foco="stock-nombre" maxlength="80" required value="${esc(f.nombre)}"
-                placeholder="Ej: Bolsa de alimento Sieger adulto 15 kg">
+            <input ${campo}="producto" data-foco="${prefijo}-producto" maxlength="120" required value="${esc(f.producto)}"
+                placeholder="Ej: Royal Canin Mini Adult 7,5 kg">
         </label>
         <div class="formulario__fila">
-            <label>Local
-                <select data-stock-campo="local">
-                    ${Object.entries(LOCALES).map(([id, l]) => `<option value="${id}" ${id === (f.local || (filtro !== "todos" ? filtro : "diagonal")) ? "selected" : ""}>${l.nombre}</option>`).join("")}
-                </select>
-            </label>
-            <label>Unidad
-                <select data-stock-campo="unidad">
-                    ${UNIDADES.map((u) => `<option ${u === f.unidad ? "selected" : ""}>${u}</option>`).join("")}
-                </select>
-            </label>
-        </div>
-        <div class="formulario__fila">
             <label>Cantidad
-                <input data-stock-campo="cantidad" type="number" min="0" step="1" inputmode="numeric" value="${esc(f.cantidad)}" placeholder="0">
+                <input ${campo}="cantidad" data-foco="${prefijo}-cantidad" type="number" min="1" max="999" step="1" inputmode="numeric" required value="${esc(f.cantidad)}">
             </label>
-            <label>Mínimo <small>(opcional)</small>
-                <input data-stock-campo="minimo" type="number" min="0" step="1" inputmode="numeric" value="${esc(f.minimo)}" placeholder="Ej: 2">
+            <label>Local
+                <select ${campo}="local">
+                    ${Object.entries(LOCALES).map(([id, l]) => `<option value="${id}" ${id === f.local ? "selected" : ""}>${l.nombre}</option>`).join("")}
+                </select>
             </label>
         </div>
-        <button class="boton boton--grande" type="submit">Agregar al stock</button>
-    </form>`;
+        <label>Nombre del cliente
+            <input ${campo}="cliente" data-foco="${prefijo}-cliente" maxlength="80" required value="${esc(f.cliente)}" placeholder="Ej: Marta">
+        </label>
+        <label>Teléfono
+            <input ${campo}="telefono" data-foco="${prefijo}-telefono" type="tel" inputmode="tel" maxlength="30" value="${esc(f.telefono)}" placeholder="Ej: 11 5555-1234">
+        </label>
+        <label>Forma de pago
+            <select ${campo}="pago">
+                <option value="" ${!f.pago ? "selected" : ""}>Todavía no se sabe</option>
+                ${FORMAS_PAGO.map((x) => `<option ${x === f.pago ? "selected" : ""}>${x}</option>`).join("")}
+            </select>
+        </label>
+        <label>Nota (opcional)
+            <textarea ${campo}="nota" data-foco="${prefijo}-nota" rows="2" maxlength="300" placeholder="Ej: seña de $ 5.000, lo retira el sábado">${esc(f.nota)}</textarea>
+        </label>`;
 }
 
-function filaEdicion(p) {
-    const e = estado.edicionStock;
+function tarjetaPedidoCliente(x) {
+    if (estado.pedidoEditando === x.id) {
+        return `
+        <li class="pedido-cliente pedido-cliente--editando">
+            <form class="formulario formulario--compacto" id="form-editar-pedido">
+                <h3>✏️ Editar pedido</h3>
+                ${camposPedido(estado.edicionPedido, "edicion-pedido")}
+                <div class="tarea__botones">
+                    <button class="boton" type="submit">Guardar</button>
+                    <button class="boton boton--suave" type="button" data-pedido-cancelar>Cancelar</button>
+                </div>
+                <button class="nota__borrar" type="button" data-pedido-borrar="${x.id}">Borrar pedido</button>
+            </form>
+        </li>`;
+    }
+    const tel = (x.telefono || "").replace(/[^\d+]/g, "");
+    const botones = {
+        pendiente: `<button class="boton boton--chico" data-pedido-estado="${x.id}" data-valor="llego">📦 Ya llegó</button>`,
+        llego: `${tel ? `<a class="boton boton--chico boton--suave" href="tel:${tel}">📞 Llamar</a>` : ""}
+            <button class="boton boton--chico" data-pedido-estado="${x.id}" data-valor="entregado">✅ Entregado</button>`,
+        entregado: `<button class="boton boton--chico boton--suave" data-pedido-estado="${x.id}" data-valor="llego">↩️ Deshacer</button>`
+    }[x.estado] || "";
     return `
-    <li class="producto producto--editando">
-        <form class="formulario formulario--compacto" id="form-editar-stock">
-            <label>Producto
-                <input data-edicion-campo="nombre" data-foco="edicion-nombre" maxlength="80" required value="${esc(e.nombre)}" ${p.base ? "disabled" : ""}>
-            </label>
-            <div class="formulario__fila">
-                <label>Cantidad
-                    <input data-edicion-campo="cantidad" type="number" min="0" step="1" inputmode="numeric" value="${esc(e.cantidad)}">
-                </label>
-                <label>Mínimo
-                    <input data-edicion-campo="minimo" type="number" min="0" step="1" inputmode="numeric" value="${esc(e.minimo)}">
-                </label>
-            </div>
-            <label>Unidad
-                <select data-edicion-campo="unidad">${UNIDADES.map((u) => `<option ${u === e.unidad ? "selected" : ""}>${u}</option>`).join("")}</select>
-            </label>
-            <div class="tarea__botones">
-                <button class="boton" type="submit">Guardar</button>
-                <button class="boton boton--suave" type="button" data-stock-cancelar>Cancelar</button>
-            </div>
-            ${p.base ? `<p class="formulario__ayuda">Producto fijo (cargado desde el código): el nombre no se cambia desde acá.</p>`
-                : `<button class="nota__borrar" type="button" data-stock-borrar="${p.id}">Borrar producto</button>`}
-        </form>
+    <li class="pedido-cliente pedido-cliente--${x.estado}">
+        <div class="pedido-cliente__cabeza">
+            <strong>${esc(x.cantidad)} × ${esc(x.producto)}</strong>
+            <span class="chip chip--${x.local}">${esc(LOCALES[x.local]?.nombre || x.local)}</span>
+        </div>
+        <p class="pedido-cliente__dato">👤 ${esc(x.cliente)}${x.telefono ? ` · 📞 <a href="tel:${tel}">${esc(x.telefono)}</a>` : ""}</p>
+        <p class="pedido-cliente__dato">💳 ${x.pago ? esc(x.pago) : "Forma de pago: todavía no se sabe"}</p>
+        ${x.nota ? `<p class="pedido-cliente__nota">🗒️ ${esc(x.nota)}</p>` : ""}
+        <small class="pedido-cliente__meta">${esc(ESTADOS_PEDIDO[x.estado]?.texto || "")} · anotó ${esc(nombre(x.persona))}, ${diaCorto(x.creado)} ${hora(x.creado)}${x.actualizado && x.actualizado !== x.creado ? ` · último cambio ${esc(nombre(x.quien || x.persona))}, ${diaCorto(x.actualizado)}` : ""}</small>
+        <div class="pedido-cliente__acciones">
+            ${botones}
+            <button class="producto__editar" data-pedido-editar="${x.id}" aria-label="Editar pedido de ${esc(x.cliente)}">✏️</button>
+        </div>
     </li>`;
 }
 
-const buscarProducto = (id) => productosStock().find((p) => p.id === id);
+function vistaPedidos() {
+    const hoy = cal.ahora();
+    if (!estado.filtroPedidos) {
+        estado.filtroPedidos = (!esDuena() && cal.dondeEsta(estado.persona, hoy)?.local) || "todos";
+    }
+    const filtro = estado.filtroPedidos;
+    const normalizar = (t) => String(t || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+    const buscar = normalizar(estado.buscarPedidos.trim());
+    const hace30 = cal.iso(cal.sumarDias(hoy, -30));
+    const visibles = estado.pedidosClientes
+        .filter((x) => filtro === "todos" || x.local === filtro)
+        .filter((x) => !buscar || [x.cliente, x.producto, x.telefono].some((t) => normalizar(t).includes(buscar)))
+        .sort((a, b) => (b.creado || "").localeCompare(a.creado || ""));
+    const de = (est) => visibles.filter((x) => x.estado === est);
+    const pendientes = de("pendiente");
+    const llegaron = de("llego");
+    // Entregados: solo los del último mes, para que la lista no crezca para siempre.
+    const entregados = de("entregado").filter((x) => (x.actualizado || x.creado || "") >= hace30);
+    const f = estado.formPedido;
+    if (!f.local) f.local = filtro !== "todos" ? filtro : "diagonal";
+    const filtros = [["todos", "Todos"], ...Object.entries(LOCALES).map(([id, l]) => [id, l.nombre])];
+    const lista = (items) => `<ul class="pedidos-clientes">${items.map(tarjetaPedidoCliente).join("")}</ul>`;
 
-async function guardarProducto(p, cambios) {
-    const { base, ...resto } = { ...p, ...cambios };
-    await datos.guardarEn("stock", { ...resto, actualizado: cal.ahora().toISOString(), persona: estado.persona });
+    return `
+    <section class="encabezado">
+        <h1>🚚 Pedidos</h1>
+        <p>Lo que se les pide a los proveedores y los pedidos que hacen los clientes.</p>
+    </section>
+    ${tarjetaPedidos(hoy)}
+    <section class="encabezado">
+        <h2>🧾 Pedidos de clientes</h2>
+        <div class="glosario__totales">
+            <span class="hoy__chip hoy__chip--fuerte">⏳ ${pendientes.length} pendiente${pendientes.length === 1 ? "" : "s"}</span>
+            ${llegaron.length ? `<span class="hoy__chip hoy__chip--alerta">📦 ${llegaron.length} para avisar</span>` : ""}
+        </div>
+        <input class="glosario__buscar" type="search" data-buscar-pedidos data-foco="buscar-pedidos"
+            value="${esc(estado.buscarPedidos)}" placeholder="🔎 Buscar cliente, producto o teléfono">
+    </section>
+    <div class="filtros">
+        ${filtros.map(([id, txt]) => `<button class="filtros__item ${filtro === id ? "is-activo" : ""}" data-filtro-pedidos="${id}">${txt}</button>`).join("")}
+    </div>
+    ${llegaron.length ? `<h3 class="bloque__titulo">${ESTADOS_PEDIDO.llego.titulo}</h3>${lista(llegaron)}` : ""}
+    <h3 class="bloque__titulo">${ESTADOS_PEDIDO.pendiente.titulo}</h3>
+    ${pendientes.length ? lista(pendientes) : `<p class="vacio">${buscar ? "No hay pedidos con esa búsqueda." : "No hay pedidos pendientes. Cuando una clienta pida algo, anotalo abajo."}</p>`}
+    ${entregados.length ? `
+    <details class="pedidos-clientes__entregados">
+        <summary>${ESTADOS_PEDIDO.entregado.titulo} (último mes: ${entregados.length})</summary>
+        ${lista(entregados)}
+    </details>` : ""}
+    <form class="formulario" id="form-pedido">
+        <h2>➕ Nuevo pedido de cliente</h2>
+        ${camposPedido(f, "pedido")}
+        <button class="boton boton--grande" type="submit">Anotar pedido</button>
+    </form>`;
 }
 
-async function sumarStock(id, cuanto) {
-    const p = buscarProducto(id);
-    if (!p) return;
-    const nueva = Math.max(0, Number(p.cantidad || 0) + cuanto);
-    if (nueva === Number(p.cantidad || 0)) return;
-    await guardarProducto(p, { cantidad: nueva });
+// Arma el documento a guardar a partir del formulario; null si falta algo.
+function leerFormPedido(f) {
+    const cantidad = Math.round(Number(f.cantidad));
+    const datosPedido = {
+        cliente: f.cliente.trim(), telefono: f.telefono.trim(), producto: f.producto.trim(),
+        cantidad, pago: f.pago || "", nota: f.nota.trim(), local: f.local
+    };
+    if (!datosPedido.producto) return aviso("Escribí el producto"), null;
+    if (!datosPedido.cliente) return aviso("Escribí el nombre del cliente"), null;
+    if (!(cantidad >= 1 && cantidad <= 999)) return aviso("La cantidad tiene que ser 1 o más"), null;
+    return datosPedido;
 }
 
-function editarStock(id) {
-    const p = buscarProducto(id);
-    if (!p) return;
-    estado.stockEditando = id;
-    estado.edicionStock = { nombre: p.nombre, cantidad: String(p.cantidad ?? 0), minimo: p.minimo ?? "", unidad: p.unidad || "unidades" };
-    render();
-}
-
-async function guardarEdicionStock() {
-    const p = buscarProducto(estado.stockEditando);
-    const e = estado.edicionStock;
-    if (!p) return;
-    const nombreNuevo = p.base ? p.nombre : e.nombre.trim();
-    if (!nombreNuevo) return aviso("Escribí el nombre del producto");
-    await guardarProducto(p, {
-        nombre: nombreNuevo, cantidad: Math.max(0, Number(e.cantidad) || 0),
-        minimo: e.minimo === "" ? "" : Math.max(0, Number(e.minimo) || 0), unidad: e.unidad
+async function agregarPedido() {
+    const nuevo = leerFormPedido(estado.formPedido);
+    if (!nuevo) return;
+    const ahora = cal.ahora().toISOString();
+    await datos.guardarEn("pedidosClientes", {
+        id: nuevoId("pedido"), ...nuevo, estado: "pendiente", persona: estado.persona, quien: estado.persona, creado: ahora, actualizado: ahora
     });
-    estado.stockEditando = null;
-    aviso("Producto actualizado ✓");
+    estado.formPedido = formPedidoVacio(nuevo.local);
+    aviso(`Pedido de ${nuevo.cliente} anotado ✓`);
     render();
 }
 
-async function agregarProducto() {
-    const f = estado.formStock;
-    const nombreNuevo = f.nombre.trim();
-    if (!nombreNuevo) return aviso("Escribí el nombre del producto");
-    const local = f.local || (estado.filtroStock !== "todos" ? estado.filtroStock : "diagonal");
-    await datos.guardarEn("stock", {
-        id: nuevoId("stock"), local, nombre: nombreNuevo, unidad: f.unidad || "unidades",
-        cantidad: Math.max(0, Number(f.cantidad) || 0), minimo: f.minimo === "" ? "" : Math.max(0, Number(f.minimo) || 0),
-        actualizado: cal.ahora().toISOString(), persona: estado.persona
-    });
-    estado.formStock = { nombre: "", local, cantidad: "", minimo: "", unidad: f.unidad || "unidades" };
-    aviso(`"${nombreNuevo}" agregado al stock ✓`);
+function editarPedido(id) {
+    const x = buscarPedido(id);
+    if (!x) return;
+    estado.pedidoEditando = id;
+    estado.edicionPedido = { ...formPedidoVacio(x.local), ...x, cantidad: String(x.cantidad ?? 1) };
     render();
 }
 
-async function borrarProducto(id) {
-    const p = buscarProducto(id);
-    if (!p || p.base || !confirm(`¿Borrar "${p.nombre}" del stock?`)) return;
-    await datos.borrarDe("stock", id);
-    estado.stockEditando = null;
-    aviso("Producto borrado");
+// Guarda el pedido completo con los cambios (el documento se reemplaza entero).
+async function guardarPedido(x, cambios) {
+    const { uid, ...resto } = x;
+    await datos.guardarEn("pedidosClientes", { ...resto, ...cambios, quien: estado.persona, actualizado: cal.ahora().toISOString() });
+}
+
+async function guardarEdicionPedido() {
+    const x = buscarPedido(estado.pedidoEditando);
+    const cambios = x && leerFormPedido(estado.edicionPedido);
+    if (!cambios) return;
+    await guardarPedido(x, cambios);
+    estado.pedidoEditando = null;
+    aviso("Pedido actualizado ✓");
+    render();
+}
+
+async function cambiarEstadoPedido(id, nuevoEstado) {
+    const x = buscarPedido(id);
+    if (!x) return;
+    await guardarPedido(x, { estado: nuevoEstado });
+    aviso({ llego: "📦 Marcado como llegado: avisale al cliente", entregado: "✅ Pedido entregado" }[nuevoEstado] || "Listo");
+}
+
+async function borrarPedido(id) {
+    const x = buscarPedido(id);
+    if (!x || !confirm(`¿Borrar el pedido de ${x.cliente} (${x.producto})?`)) return;
+    await datos.borrarDe("pedidosClientes", id);
+    estado.pedidoEditando = null;
+    aviso("Pedido borrado");
 }
 
 // ---------- Vista: Bloc de notas (Agustina) ----------

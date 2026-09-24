@@ -86,3 +86,100 @@
         }
     }
 }
+
+// Pedidos de clientes: tarjeta por pedido con su estado.
+.pedidos-clientes {
+    @include flex(column, $gap: 8px);
+    margin-bottom: 14px;
+    list-style: none;
+
+    &__entregados {
+        margin-bottom: 14px;
+
+        summary {
+            padding: 8px 0;
+            @extend %texto-suave;
+            font-weight: 800;
+            cursor: pointer;
+        }
+    }
+}
+
+.pedido-cliente {
+    @extend %tarjeta;
+    @include flex(column, $gap: 4px);
+    padding: 12px 14px;
+    border-left: 5px solid $color-pospuesta;
+
+    &--llego {
+        border-left-color: $color-ok;
+        background-color: $color-ok-fondo;
+    }
+
+    &--entregado {
+        border-left-color: $color-borde;
+        opacity: 0.8;
+    }
+
+    &--editando {
+        display: block;
+        padding: 0;
+        border: none;
+        box-shadow: none;
+    }
+
+    &__cabeza {
+        @include flex(row, space-between, flex-start, 8px);
+
+        strong {
+            font-size: 1.05rem;
+        }
+    }
+
+    &__dato {
+        font-size: 0.92rem;
+
+        a {
+            color: inherit;
+            font-weight: 800;
+        }
+    }
+
+    &__nota {
+        padding: 6px 10px;
+        border-radius: 10px;
+        background-color: $color-primario-suave;
+        font-size: 0.9rem;
+    }
+
+    &__meta {
+        @extend %texto-suave;
+        font-size: 0.78rem;
+    }
+
+    &__acciones {
+        @include flex(row, flex-end, center, 8px);
+        flex-wrap: wrap;
+        margin-top: 4px;
+
+        a {
+            text-decoration: none;
+        }
+    }
+}
+
+// Botón redondo de editar (✏️)
+.producto__editar {
+    flex: none;
+    width: 34px;
+    height: 34px;
+    border: 1px solid $color-borde;
+    border-radius: 50%;
+    background: none;
+    cursor: pointer;
+    opacity: 0.7;
+
+    &:hover {
+        opacity: 1;
+    }
+}

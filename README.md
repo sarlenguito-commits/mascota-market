@@ -11,7 +11,10 @@ Además:
 - **📌 Agenda**: Agustina agrega cosas a un día del calendario, para una empleada o para todas. Aparecen con 📌 en el calendario y en "Hoy" ese día.
 - **🗒️ Bloc de notas de Agustina**: notas privadas que solo ve ella.
 - **📖 Glosario**: todas las tareas de los dos locales con quién hace cada una según la semana, el total y un buscador.
-- **🚚 Pedidos / 📦 Stock**: arriba, en grande, lo que **se pide hoy** y lo que **llega hoy**. Sale de los días fijos de cada marca (`PEDIDOS` en `config.js`), y Agustina puede cambiar lo de cualquier día, con una nota. Lo de hoy también aparece como aviso en "Hoy" de las chicas. Abajo, el stock por local con − / + y aviso de poco stock.
+- **🚚 Pedidos**:
+  - **Proveedores:** arriba, en grande, lo que **se pide hoy** y lo que **llega hoy**. Sale de los días fijos de cada marca (`PEDIDOS` en `config.js`), y Agustina puede cambiar lo de cualquier día, con una nota.
+  - **Pedidos de clientes:** cuando una clienta pide algo que no hay, se anota el producto, la cantidad, el local, el nombre, el teléfono, la forma de pago (si se sabe) y una nota. Cada pedido pasa por ⏳ pendiente → 📦 llegó (avisar al cliente, con botón para llamar) → ✅ entregado. Tiene buscador y filtro por local, y se puede editar o borrar. Los entregados del último mes quedan en una lista plegada.
+  - En **"Hoy"** de las chicas, **abajo de las tareas**, aparece "🚚 Pedidos de hoy" con lo de los proveedores y los pedidos de clientes que ya llegaron en su local.
 
 > Esta app es para organizar el trabajo entre turnos de forma simple y efectiva.
 
@@ -54,7 +57,7 @@ Para simular otra fecha: `index.html?fecha=2026-09-28&hora=15:00`.
    - `equipo@mascotamarket.app` con la **clave del equipo**, la misma para todas las chicas. Cada una la pone una sola vez por celular y después entra tocando su nombre.
 4. **Firestore Database** → Crear base de datos (modo producción, ubicación `southamerica-east1`).
 5. **Firestore → Reglas** → pegar el contenido de `firestore.rules` → Publicar.
-   Las reglas cubren `registros`, `tareas`, `notasTurno`, `agenda`, `stock` y `pedidosDia`. Solo Agustina escribe en `tareas`, `agenda` y `pedidosDia`, y `notasDuena` es privado de ella. **Cada vez que cambia `firestore.rules`, hay que volver a pegarlo y publicarlo en la consola.**
+   Las reglas cubren `registros`, `tareas`, `notasTurno`, `agenda`, `pedidosClientes` y `pedidosDia`. Solo Agustina escribe en `tareas`, `agenda` y `pedidosDia`, y `notasDuena` es privado de ella. **Cada vez que cambia `firestore.rules`, hay que volver a pegarlo y publicarlo en la consola.**
 6. **Configuración del proyecto → Tus apps → Web (`</>`)** → registrar app → copiar el objeto `firebaseConfig` en `js/config.js`.
 7. **Authentication → Configuración → Dominios autorizados** → agregar el dominio de GitHub Pages (`sarlenguito-commits.github.io`).
 

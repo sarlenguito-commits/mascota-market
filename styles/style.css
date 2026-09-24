@@ -1,11 +1,11 @@
-.pedidos, .producto, .progreso-local, .evento, .mas__item, .momento__vacio, .ficha, .semana-glosario, .nota, .tabla-scroll, .historial, .tarea, .formulario, .lista-tareas li, .calendario, .detalle-dia, .lista-cal__semana, .login__form, .login__personas, .bienvenida__tarjeta, .modal__caja {
+.pedidos, .pedido-cliente, .progreso-local, .evento, .mas__item, .momento__vacio, .ficha, .semana-glosario, .nota, .tabla-scroll, .historial, .tarea, .formulario, .lista-tareas li, .calendario, .detalle-dia, .lista-cal__semana, .login__form, .login__personas, .bienvenida__tarjeta, .modal__caja {
   background-color: var(--superficie);
   border: 1px solid var(--borde);
   border-radius: 16px;
   box-shadow: 0 2px 12px var(--sombra);
 }
 
-.pedidos__subtitulo, .pedido__dias, .producto__info small, .progreso-local__texto span, .evento__cuerpo small, .saludo__donde, .momento__ayuda, .ficha__cabecera p, .semana-glosario__cabecera small, .nota__meta, .leyenda, .historial__cuando, .historial__meta, .bloque__meta, .formulario__ayuda, .lista-tareas li small, .encabezado p, .vacio, .login__marca p {
+.pedidos__subtitulo, .pedido__dias, .pedidos-clientes__entregados summary, .pedido-cliente__meta, .progreso-local__texto span, .evento__cuerpo small, .saludo__donde, .momento__ayuda, .ficha__cabecera p, .semana-glosario__cabecera small, .nota__meta, .leyenda, .historial__cuando, .historial__meta, .bloque__meta, .formulario__ayuda, .lista-tareas li small, .encabezado p, .vacio, .login__marca p {
   color: var(--texto-suave);
   font-size: 0.9rem;
 }
@@ -380,102 +380,102 @@ p {
   animation: flotar 10s ease-in-out infinite;
 }
 .decoracion span:nth-child(1) {
-  top: 60%;
-  left: 55%;
-  font-size: 2.4rem;
-  animation-duration: 13s;
-  animation-delay: -2s;
+  top: 47%;
+  left: 52%;
+  font-size: 1.2rem;
+  animation-duration: 17s;
+  animation-delay: -1s;
 }
 .decoracion span:nth-child(2) {
-  top: 71%;
-  left: 14%;
-  font-size: 2rem;
-  animation-duration: 16s;
-  animation-delay: -2s;
+  top: 6%;
+  left: 42%;
+  font-size: 2.3rem;
+  animation-duration: 12s;
+  animation-delay: -3s;
 }
 .decoracion span:nth-child(3) {
-  top: 10%;
-  left: 91%;
-  font-size: 1.1rem;
-  animation-duration: 17s;
-  animation-delay: -3s;
-}
-.decoracion span:nth-child(4) {
-  top: 5%;
-  left: 35%;
-  font-size: 2.8rem;
-  animation-duration: 18s;
-  animation-delay: -2s;
-}
-.decoracion span:nth-child(5) {
-  top: 87%;
-  left: 27%;
-  font-size: 1.7rem;
-  animation-duration: 18s;
+  top: 50%;
+  left: 12%;
+  font-size: 1.9rem;
+  animation-duration: 10s;
   animation-delay: -6s;
 }
+.decoracion span:nth-child(4) {
+  top: 36%;
+  left: 30%;
+  font-size: 2.1rem;
+  animation-duration: 14s;
+  animation-delay: -1s;
+}
+.decoracion span:nth-child(5) {
+  top: 62%;
+  left: 32%;
+  font-size: 1.4rem;
+  animation-duration: 11s;
+  animation-delay: -1s;
+}
 .decoracion span:nth-child(6) {
-  top: 59%;
-  left: 34%;
-  font-size: 1.1rem;
-  animation-duration: 16s;
-  animation-delay: -3s;
+  top: 33%;
+  left: 5%;
+  font-size: 1.2rem;
+  animation-duration: 17s;
+  animation-delay: -2s;
 }
 .decoracion span:nth-child(7) {
-  top: 55%;
-  left: 61%;
-  font-size: 1.7rem;
+  top: 54%;
+  left: 35%;
+  font-size: 1.9rem;
   animation-duration: 18s;
-  animation-delay: -8s;
+  animation-delay: -5s;
 }
 .decoracion span:nth-child(8) {
-  top: 44%;
-  left: 33%;
-  font-size: 1.9rem;
-  animation-duration: 11s;
-  animation-delay: -4s;
+  top: 35%;
+  left: 42%;
+  font-size: 2.5rem;
+  animation-duration: 13s;
+  animation-delay: -5s;
 }
 .decoracion span:nth-child(9) {
-  top: 67%;
-  left: 42%;
-  font-size: 2.1rem;
-  animation-duration: 12s;
+  top: 40%;
+  left: 10%;
+  font-size: 1.3rem;
+  animation-duration: 15s;
   animation-delay: -5s;
 }
 .decoracion span:nth-child(10) {
-  top: 57%;
-  left: 85%;
-  font-size: 2.5rem;
-  animation-duration: 13s;
-  animation-delay: -4s;
+  top: 74%;
+  left: 5%;
+  font-size: 1.5rem;
+  animation-duration: 17s;
+  animation-delay: -3s;
 }
 .decoracion span:nth-child(11) {
-  top: 51%;
-  left: 67%;
-  font-size: 1.8rem;
-  animation-duration: 11s;
-  animation-delay: -5s;
+  top: 6%;
+  left: 29%;
+  font-size: 1.4rem;
+  animation-duration: 13s;
+  animation-delay: -1s;
 }
 .decoracion span:nth-child(12) {
-  top: 64%;
-  left: 89%;
-  font-size: 1.5rem;
-  animation-duration: 9s;
-  animation-delay: -8s;
+  top: 52%;
+  left: 30%;
+  font-size: 2.2rem;
+  animation-duration: 11s;
+  animation-delay: -4s;
 }
 .decoracion span:nth-child(13) {
-  top: 86%;
-  left: 44%;
-  font-size: 1.1rem;
-  animation-duration: 16s;
-  animation-delay: -5s;
+  top: 19%;
+  left: 57%;
+  font-size: 2.1rem;
+  animation-duration: 17s;
+  animation-delay: -2s;
 }
 .decoracion span:nth-child(14) {
-  top: 63%;
-  left: 11%;
-  font-size: 1.5rem;
+  top: 65%;
+  left: 54%;
+  font-size: 2.1rem;
   animation-duration: 16s;
-  animation-delay: -8s;
+  animation-delay: -7s;
 }
 
 .decoracion .decoracion__paseo {
@@ -2663,96 +2663,6 @@ p {
   }
 }
 
-.productos {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  list-style: none;
-}
-
-.producto {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-}
-.producto__info {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  flex: 1;
-  min-width: 0;
-}
-.producto__info small {
-  font-size: 0.78rem;
-}
-.producto__alerta {
-  align-self: flex-start;
-  padding: 1px 8px;
-  border-radius: 999px;
-  background-color: var(--atrasada);
-  color: #FFFFFF;
-  font-size: 0.72rem;
-  font-weight: 800;
-}
-.producto__contador {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 4px;
-  flex: none;
-  padding: 3px;
-  border-radius: 999px;
-  background-color: var(--primario-suave);
-}
-.producto__boton {
-  width: 32px;
-  height: 32px;
-  border: none;
-  border-radius: 50%;
-  background-color: var(--primario);
-  color: #FFFFFF;
-  font-size: 1.2rem;
-  font-weight: 800;
-  line-height: 1;
-  cursor: pointer;
-  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-.producto__boton:active {
-  transform: scale(0.85);
-}
-.producto__cantidad {
-  min-width: 34px;
-  color: var(--primario-oscuro);
-  font-size: 1.05rem;
-  font-weight: 800;
-  text-align: center;
-}
-.producto__editar {
-  flex: none;
-  width: 34px;
-  height: 34px;
-  border: 1px solid var(--borde);
-  border-radius: 50%;
-  background: none;
-  cursor: pointer;
-  opacity: 0.7;
-}
-.producto__editar:hover {
-  opacity: 1;
-}
-.producto.is-bajo {
-  border-color: var(--atrasada);
-  background-color: var(--atrasada-fondo);
-}
-.producto--editando {
-  display: block;
-  padding: 0;
-  border: none;
-  box-shadow: none;
-}
-
 .pedidos {
   display: flex;
   flex-direction: column;
@@ -2832,6 +2742,96 @@ p {
   border-radius: 999px;
   background-color: var(--primario);
   color: #FFFFFF;
+}
+
+.pedidos-clientes {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 14px;
+  list-style: none;
+}
+.pedidos-clientes__entregados {
+  margin-bottom: 14px;
+}
+.pedidos-clientes__entregados summary {
+  padding: 8px 0;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.pedido-cliente {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  border-left: 5px solid var(--pospuesta);
+}
+.pedido-cliente--llego {
+  border-left-color: var(--ok);
+  background-color: var(--ok-fondo);
+}
+.pedido-cliente--entregado {
+  border-left-color: var(--borde);
+  opacity: 0.8;
+}
+.pedido-cliente--editando {
+  display: block;
+  padding: 0;
+  border: none;
+  box-shadow: none;
+}
+.pedido-cliente__cabeza {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+.pedido-cliente__cabeza strong {
+  font-size: 1.05rem;
+}
+.pedido-cliente__dato {
+  font-size: 0.92rem;
+}
+.pedido-cliente__dato a {
+  color: inherit;
+  font-weight: 800;
+}
+.pedido-cliente__nota {
+  padding: 6px 10px;
+  border-radius: 10px;
+  background-color: var(--primario-suave);
+  font-size: 0.9rem;
+}
+.pedido-cliente__meta {
+  font-size: 0.78rem;
+}
+.pedido-cliente__acciones {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+.pedido-cliente__acciones a {
+  text-decoration: none;
+}
+
+.producto__editar {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--borde);
+  border-radius: 50%;
+  background: none;
+  cursor: pointer;
+  opacity: 0.7;
+}
+.producto__editar:hover {
+  opacity: 1;
 }
 
 /*# sourceMappingURL=style.css.map */

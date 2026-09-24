@@ -71,15 +71,21 @@ service cloud.firestore {
       allow write: if esAgustina();
     }
 
-    // Stock: por ahora todas lo pueden ver, cargar, modificar y borrar.
-    match /stock/{id} {
+    // Pedidos de clientes: todas los ven, cargan, modifican y borran.
+    match /pedidosClientes/{id} {
       allow read, delete: if esDelEquipo();
       allow create, update: if esDelEquipo()
         && request.resource.data.local in ['diagonal', 'rivadavia']
-        && request.resource.data.nombre is string
-        && request.resource.data.nombre.size() <= 80
+        && request.resource.data.estado in ['pendiente', 'llego', 'entregado']
+        && request.resource.data.cliente is string
+        && request.resource.data.cliente.size() > 0 && request.resource.data.cliente.size() <= 80
+        && request.resource.data.telefono is string && request.resource.data.telefono.size() <= 30
+        && request.resource.data.producto is string
+        && request.resource.data.producto.size() > 0 && request.resource.data.producto.size() <= 120
         && request.resource.data.cantidad is number
-        && request.resource.data.cantidad >= 0;
+        && request.resource.data.cantidad >= 1 && request.resource.data.cantidad <= 999
+        && request.resource.data.pago is string && request.resource.data.pago.size() <= 30
+        && request.resource.data.nota is string && request.resource.data.nota.size() <= 300;
     }
 
     // Pedidos de un día puntual (id = fecha): todas los ven, solo Agustina los cambia.
