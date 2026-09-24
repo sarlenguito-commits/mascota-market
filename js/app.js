@@ -1702,8 +1702,8 @@ function camposPedido(f, prefijo) {
                 <input ${campo}="sena" data-foco="${prefijo}-sena" inputmode="numeric" maxlength="12" value="${esc(f.sena)}" placeholder="Ej: 5.000">
             </label>` : ""}
             ${f.pagoEstado === "total" ? `
-            <label>Monto total
-                <input ${campo}="total" data-foco="${prefijo}-total" inputmode="numeric" maxlength="12" value="${esc(f.total)}" placeholder="Ej: 48.500">
+            <label>Monto total pagado <small>(obligatorio)</small>
+                <input ${campo}="total" data-foco="${prefijo}-total" inputmode="numeric" maxlength="12" required value="${esc(f.total)}" placeholder="$">
             </label>` : ""}
         </div>
         <label>Forma de pago
@@ -1713,7 +1713,7 @@ function camposPedido(f, prefijo) {
             </select>
         </label>
         <label>Nota (opcional)
-            <textarea ${campo}="nota" data-foco="${prefijo}-nota" rows="2" maxlength="300" placeholder="Ej: seña de $ 5.000, lo retira el sábado">${esc(f.nota)}</textarea>
+            <textarea ${campo}="nota" data-foco="${prefijo}-nota" rows="2" maxlength="300">${esc(f.nota)}</textarea>
         </label>`;
 }
 
@@ -1824,6 +1824,7 @@ function leerFormPedido(f) {
     if (!datosPedido.producto) return aviso("Escribí el producto"), null;
     if (!datosPedido.cliente) return aviso("Escribí el nombre del cliente"), null;
     if (!(cantidad >= 1 && cantidad <= 999)) return aviso("La cantidad tiene que ser 1 o más"), null;
+    if (datosPedido.pagoEstado === "total" && !datosPedido.total) return aviso("Poné el monto total que pagó"), null;
     return datosPedido;
 }
 
