@@ -1,0 +1,52 @@
+@use "../utilities/variables" as *;
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    min-height: 100vh;
+    font-family: $fuente;
+    background-color: $color-fondo;
+    color: $color-texto;
+    -webkit-tap-highlight-color: transparent;
+
+    // Logo de fondo, fijo y muy suave para que no moleste al leer.
+    &::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+        background: url("../assets/img/logo.png") center / min(130vw, 1200px) no-repeat;
+        opacity: var(--logo-opacidad);
+        filter: var(--logo-filtro);
+        pointer-events: none;
+    }
+
+    // Dos luces de neón verde en el fondo que laten despacio.
+    &::after {
+        content: "";
+        position: fixed;
+        inset: 0;
+        z-index: -2;
+        background:
+            radial-gradient(circle at 8% 18%, $color-neon, transparent 38%),
+            radial-gradient(circle at 92% 82%, $color-neon, transparent 42%);
+        pointer-events: none;
+        animation: latido-neon 6s ease-in-out infinite;
+    }
+}
+
+button,
+input,
+select,
+textarea {
+    font: inherit;
+}
+
+.cargando {
+    padding: 40px;
+    text-align: center;
+}

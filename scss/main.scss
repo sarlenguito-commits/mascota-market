@@ -1,0 +1,35 @@
+// ============================================
+// main.scss — único punto de entrada
+// Orden: herramientas → globales → estructura → piezas
+// ============================================
+
+// 1. Utilities: variables, mixins y placeholders
+@use "utilities/variables";
+@use "utilities/mixins";
+@use "utilities/extend";
+
+// 2. Base (temas primero: define las variables de color)
+@use "base/temas";
+@use "base/base";
+@use "base/tipografia";
+@use "base/animaciones";
+@use "base/decoracion";
+
+// 3. Layout
+@use "layout/cabecera";
+@use "layout/navegacion";
+
+// 4. Components
+@use "components/botones";
+@use "components/login";
+@use "components/avisos";
+@use "components/hoy";
+@use "components/calendario";
+@use "components/formulario";
+@use "components/tareas";
+@use "components/informes";
+@use "components/notas";
+@use "components/glosario";
+@use "components/momentos";
+@use "components/muro";
+@use "components/stock";

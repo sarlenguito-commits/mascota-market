@@ -1,0 +1,347 @@
+@use "sass:map";
+@use "../utilities/variables" as *;
+@use "../utilities/mixins" as *;
+@use "../utilities/extend";
+
+// ============================================
+// Calendario compacto: grilla de mes clásica (L a D).
+// Cada día lleva el color de su semana del mes (S1–S4): fondo suave y rayita arriba.
+// ============================================
+
+$semanas-suave: (1: $color-semana-1, 2: $color-semana-2, 3: $color-semana-3, 4: $color-semana-4);
+
+.calendario {
+    @extend %tarjeta;
+    @include flex(column, $gap: 12px);
+    width: 100%;
+    max-width: 560px;
+    padding: 14px;
+
+    &__cabecera {
+        @include flex(row, space-between, center);
+
+        h2 {
+            color: $color-primario-oscuro;
+            font-size: 1.25rem;
+            text-transform: capitalize;
+        }
+    }
+
+    // S1 1–7 · S2 8–14 · …
+    &__semanas {
+        @include flex(row, $gap: 6px);
+        flex-wrap: wrap;
+    }
+
+    &__semana {
+        @include flex(row, $align: center, $gap: 5px);
+        padding: 2px 8px 2px 2px;
+        border-radius: $radio-pildora;
+        background-color: $color-fondo;
+        color: $color-texto-suave;
+        font-size: 0.75rem;
+        font-weight: 700;
+
+        &.is-actual {
+            background-color: $color-primario-suave;
+            color: $color-primario-oscuro;
+            box-shadow: 0 0 0 1.5px $color-primario;
+        }
+    }
+
+    &__grilla {
+        display: grid;
+        grid-template-columns: repeat(7, minmax(0, 1fr));
+        gap: 4px;
+    }
+
+    &__nombre {
+        padding-bottom: 2px;
+        color: $color-texto-suave;
+        font-size: 0.72rem;
+        font-weight: 800;
+        text-align: center;
+    }
+
+    &__leyenda {
+        @include flex(row, $gap: 10px);
+        flex-wrap: wrap;
+        padding-top: 8px;
+        border-top: 1px solid $color-borde;
+        color: $color-texto-suave;
+        font-size: 0.75rem;
+
+        span {
+            @include flex(row, $align: center, $gap: 4px);
+        }
+    }
+
+    @include escritorio {
+        padding: 18px;
+    }
+}
+
+// Día del calendario
+.dia {
+    @include flex(column, flex-start, center, 1px);
+    min-height: 46px;
+    padding: 4px 2px;
+    border: 1px solid transparent;
+    border-top: 3px solid transparent;
+    border-radius: 8px;
+    color: $color-texto;
+    font: inherit;
+    cursor: pointer;
+    transition: transform $transicion, box-shadow $transicion;
+
+    &:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 3px 8px $color-sombra;
+    }
+
+    &__numero {
+        font-size: 0.9rem;
+        font-weight: 800;
+        line-height: 1.2;
+    }
+
+    &__marcas {
+        @include flex(row, center, center, 1px);
+        flex-wrap: wrap;
+        font-size: 0.62rem;
+        line-height: 1;
+    }
+
+    // Color de la semana del mes
+    @each $n, $color in $semanas-fuerte {
+        &--s#{$n} {
+            border-top-color: $color;
+            background-color: map.get($semanas-suave, $n);
+        }
+    }
+
+    &.is-vacio {
+        background: none;
+        border-color: transparent;
+        cursor: default;
+
+        &:hover {
+            transform: none;
+            box-shadow: none;
+        }
+    }
+
+    &.is-domingo {
+        opacity: 0.4;
+    }
+
+    &.is-hoy {
+        box-shadow: 0 0 0 2px $color-primario;
+
+        .dia__numero {
+            color: $color-primario;
+        }
+    }
+
+    &.is-seleccionado {
+        border-color: $color-primario-oscuro;
+        border-top-color: $color-primario-oscuro;
+    }
+
+    @include escritorio {
+        min-height: 58px;
+
+        &__numero {
+            font-size: 1rem;
+        }
+
+        &__marcas {
+            font-size: 0.72rem;
+        }
+    }
+}
+
+// Los puntitos con cantidad de hechas / pasadas
+.punto {
+    min-width: 14px;
+    padding: 0 3px;
+    border-radius: $radio-pildora;
+    font-size: 0.6rem;
+    font-weight: 800;
+    text-align: center;
+    line-height: 14px;
+
+    &--ok {
+        @include colores($color-ok, $color-blanco);
+    }
+
+    &--pos {
+        @include colores($color-pospuesta, $color-blanco);
+    }
+}
+
+.detalle-dia {
+    @extend %tarjeta;
+    padding: 18px;
+
+    &__grupo {
+        @include flex(column, $gap: 6px);
+
+        h3 {
+            color: $color-primario-oscuro;
+        }
+
+        ul {
+            @include flex(column, $gap: 8px);
+            list-style: none;
+        }
+
+        li {
+            @include flex(column, $gap: 2px);
+
+            small {
+                color: $color-texto-suave;
+            }
+
+            .detalle-dia__nota {
+                color: $color-primario-oscuro;
+            }
+        }
+    }
+}
+
+// Calendario con los filtros siempre a mano:
+// celular → pegados arriba al bajar; computadora → columna al costado que acompaña el scroll.
+.cal-layout {
+    @include flex(column, $gap: 16px);
+
+    &__filtros {
+        position: sticky;
+        top: $alto-cabecera;
+        z-index: 4;
+        margin: 0 (-$espaciado);
+        padding: 8px $espaciado;
+        background-color: $color-fondo;
+        box-shadow: 0 6px 12px -8px $color-sombra;
+    }
+
+    &__principal {
+        @include flex(column, $gap: 22px);
+        min-width: 0;
+    }
+
+    @include escritorio {
+        display: grid;
+        grid-template-columns: 210px minmax(0, 1fr);
+        align-items: start;
+        gap: 24px;
+
+        &__filtros {
+            top: calc(#{$alto-cabecera-escritorio} + 16px);
+            margin: 0;
+            padding: 16px;
+            border: 1px solid $color-borde;
+            border-radius: $radio;
+            background-color: $color-superficie;
+            box-shadow: $sombra;
+        }
+    }
+}
+
+// Filtros del calendario (local y estado)
+.filtros-cal {
+    @include flex(column, $gap: 8px);
+
+    // Celular: cada grupo en una fila que se desliza de costado
+    .filtros {
+        flex-wrap: nowrap;
+        align-items: center;
+        overflow-x: auto;
+        scrollbar-width: none;
+    }
+
+    .filtros__item {
+        flex: none;
+        padding: 6px 12px;
+        font-size: 0.85rem;
+    }
+
+    // Computadora: uno debajo del otro, a lo ancho de la columna
+    @include escritorio {
+        gap: 18px;
+
+        .filtros {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 6px;
+            overflow: visible;
+        }
+
+        .filtros__item {
+            text-align: left;
+        }
+
+        .filtros__titulo {
+            margin-bottom: 2px;
+        }
+    }
+}
+
+.filtros__titulo {
+    @include flex(row, $align: center, $gap: 4px);
+    min-width: 70px;
+    color: $color-texto-suave;
+    font-size: 0.8rem;
+    font-weight: 800;
+}
+
+// Lista del mes filtrada
+.lista-cal {
+    &__semana {
+        @extend %tarjeta;
+        grid-column: 1 / -1;
+        padding: 12px 14px;
+
+        h3 {
+            @include flex(row, $align: center, $gap: 8px);
+            margin-bottom: 8px;
+            color: $color-texto-suave;
+            font-size: 0.9rem;
+        }
+
+        ul {
+            @include flex(column, $gap: 6px);
+            list-style: none;
+        }
+    }
+
+    &__item {
+        @include flex(row, $align: center, $gap: 8px);
+        flex-wrap: wrap;
+        padding: 6px 8px;
+        border-radius: $radio-medio;
+        font-size: 0.9rem;
+
+        small {
+            color: $color-texto-suave;
+        }
+
+        &--hechas {
+            background-color: $color-ok-fondo;
+
+            .lista-cal__nombre {
+                text-decoration: line-through;
+                color: $color-texto-suave;
+            }
+        }
+
+        &--no-hechas {
+            background-color: $color-atrasada-fondo;
+        }
+    }
+
+    &__nombre {
+        flex: 1;
+        min-width: 140px;
+    }
+}

@@ -1,0 +1,158 @@
+// ============================================
+// Colores con modo claro y oscuro.
+// Cada color vive en dos mapas (claro / oscuro). base/_temas.scss los convierte
+// en variables CSS (--primario, --fondo, …) y acá cada $color-x apunta a su var(),
+// así todos los partials siguen usando $color-x y el tema cambia solo.
+// ============================================
+
+$tema-claro: (
+    primario: #7E6BC4,
+    primario-oscuro: #5F4DA6,
+    primario-suave: #EEEAFA,
+    primario-claro: #B4A7E6,
+    fondo: #F7F5FC,
+    superficie: #FFFFFF,
+    texto: #2B2540,
+    texto-suave: #6B6580,
+    borde: #E6E0F3,
+    ok: #3C9D6B,
+    ok-fondo: #E6F4EC,
+    atrasada: #D0524E,
+    atrasada-fondo: #FCEBEA,
+    pospuesta: #B9742A,
+    pospuesta-fondo: #FCF1E3,
+    curso: #7E6BC4,
+    curso-fondo: #EEEAFA,
+    diagonal: #3E8E86,
+    diagonal-fondo: #E4F2F0,
+    rivadavia: #C8664C,
+    rivadavia-fondo: #FBEBE6,
+    semana-1: #EEE9FB,
+    semana-2: #E6F3F1,
+    semana-3: #FBECF2,
+    semana-4: #FDF2E2,
+    // Color intenso de cada semana del mes
+    semana-1-fuerte: #9A86EC,
+    semana-2-fuerte: #3FB5A8,
+    semana-3-fuerte: #E06FA3,
+    semana-4-fuerte: #E8A344,
+    sombra: rgba(62, 45, 120, 0.08),
+    velo: rgba(43, 37, 64, 0.5),
+    degrade-1: #7E6BC4,
+    degrade-2: #A08FDA,
+    degrade-3: #C3B6EE,
+    logo-filtro: none,
+    logo-opacidad: 0.07,
+    neon: rgba(57, 255, 150, 0.28)
+);
+
+$tema-oscuro: (
+    primario: #9A88E6,
+    primario-oscuro: #C9BEF5,
+    primario-suave: #2C2544,
+    primario-claro: #6A5BB3,
+    fondo: #14111D,
+    superficie: #1F1B2B,
+    texto: #ECE8F7,
+    texto-suave: #A9A2C0,
+    borde: #332D45,
+    ok: #5CC08D,
+    ok-fondo: #1A3026,
+    atrasada: #F07D78,
+    atrasada-fondo: #3A1F22,
+    pospuesta: #E3A55E,
+    pospuesta-fondo: #372A19,
+    curso: #9A88E6,
+    curso-fondo: #2C2544,
+    diagonal: #4FA89F,
+    diagonal-fondo: #16292A,
+    rivadavia: #D87B62,
+    rivadavia-fondo: #33201B,
+    semana-1: #29233D,
+    semana-2: #1C2E2C,
+    semana-3: #33222B,
+    semana-4: #332A1C,
+    semana-1-fuerte: #A999F2,
+    semana-2-fuerte: #4CC4B6,
+    semana-3-fuerte: #EA7FB0,
+    semana-4-fuerte: #F0B05A,
+    sombra: rgba(0, 0, 0, 0.35),
+    velo: rgba(0, 0, 0, 0.6),
+    degrade-1: #4E3F92,
+    degrade-2: #6A58B8,
+    degrade-3: #8A78D4,
+    // El logo tiene fondo blanco: en oscuro se invierte para que se funda con el fondo.
+    logo-filtro: invert(1) hue-rotate(180deg),
+    logo-opacidad: 0.06,
+    neon: rgba(57, 255, 150, 0.2)
+);
+
+// Cada $color-x lee su variable CSS.
+$color-primario: var(--primario);
+$color-primario-oscuro: var(--primario-oscuro);
+$color-primario-suave: var(--primario-suave);
+$color-primario-claro: var(--primario-claro);
+$color-fondo: var(--fondo);
+$color-superficie: var(--superficie);
+$color-texto: var(--texto);
+$color-texto-suave: var(--texto-suave);
+$color-borde: var(--borde);
+$color-ok: var(--ok);
+$color-ok-fondo: var(--ok-fondo);
+$color-atrasada: var(--atrasada);
+$color-atrasada-fondo: var(--atrasada-fondo);
+$color-pospuesta: var(--pospuesta);
+$color-pospuesta-fondo: var(--pospuesta-fondo);
+$color-curso: var(--curso);
+$color-curso-fondo: var(--curso-fondo);
+$color-diagonal: var(--diagonal);
+$color-diagonal-fondo: var(--diagonal-fondo);
+$color-rivadavia: var(--rivadavia);
+$color-rivadavia-fondo: var(--rivadavia-fondo);
+$color-sombra: var(--sombra);
+$color-velo: var(--velo);
+$color-neon: var(--neon);
+$color-semana-1: var(--semana-1);
+$color-semana-2: var(--semana-2);
+$color-semana-3: var(--semana-3);
+$color-semana-4: var(--semana-4);
+
+// Color intenso de cada semana del mes (identifica S1, S2, S3 y S4 en toda la app).
+$semanas-fuerte: (
+    1: var(--semana-1-fuerte),
+    2: var(--semana-2-fuerte),
+    3: var(--semana-3-fuerte),
+    4: var(--semana-4-fuerte)
+);
+
+// Fijos en los dos temas: texto blanco sobre colores fuertes (botones, cabeceras).
+$color-blanco: #FFFFFF;
+$color-blanco-translucido: rgba(255, 255, 255, 0.22);
+$color-borde-claro: rgba(255, 255, 255, 0.45);
+
+// Degradé del encabezado
+$degrade-hoy: linear-gradient(135deg, var(--degrade-1) 0%, var(--degrade-2) 60%, var(--degrade-3) 100%);
+
+// Tipografía
+$fuente: "Nunito", system-ui, sans-serif;
+$fuente-gotica: "Grenze Gotisch", "Nunito", serif;
+
+// Medidas
+$radio: 16px;
+$radio-medio: 10px;
+$radio-pildora: 999px;
+$espaciado: 16px;
+$ancho-max: 640px;
+$ancho-max-escritorio: 1100px;
+$alto-nav: 64px;
+// Alto de la cabecera (lo usan las barras que quedan pegadas debajo al bajar)
+$alto-cabecera: 88px;
+$alto-cabecera-escritorio: 116px;
+$sombra: 0 2px 12px $color-sombra;
+$sombra-hoy: 0 8px 24px rgba(94, 77, 170, 0.35);
+$transicion: 0.2s ease;
+$breakpoint-escritorio: 900px;
+
+// Animaciones
+$duracion-entrada: 0.45s;
+$curva-rebote: cubic-bezier(0.34, 1.56, 0.64, 1);

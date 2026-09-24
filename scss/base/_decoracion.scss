@@ -1,0 +1,99 @@
+@use "sass:math";
+@use "../utilities/variables" as *;
+
+// ============================================
+// Decoración animada del fondo: huesitos, patitas, perritos y gatitos que flotan,
+// y un perrito que cruza caminando cada tanto.
+// Posición, tamaño, duración y demora se sortean con random() al compilar,
+// así cada elemento se mueve distinto.
+// ============================================
+
+$cantidad-flotantes: 14;
+
+@keyframes flotar {
+    0% {
+        transform: translateY(0) rotate(0deg);
+    }
+
+    50% {
+        transform: translateY(-40px) rotate(18deg);
+    }
+
+    100% {
+        transform: translateY(0) rotate(0deg);
+    }
+}
+
+@keyframes pasear {
+    0% {
+        transform: translateX(-10vw) scaleX(-1);
+    }
+
+    100% {
+        transform: translateX(110vw) scaleX(-1);
+    }
+}
+
+// Pequeño salto de cada paso del perrito
+@keyframes trotar {
+    0%,
+    100% {
+        margin-bottom: 0;
+    }
+
+    50% {
+        margin-bottom: 6px;
+    }
+}
+
+.decoracion {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    overflow: hidden;
+    pointer-events: none;
+
+    span {
+        position: absolute;
+        opacity: 0.16;
+        animation: flotar 10s ease-in-out infinite;
+    }
+
+    @for $i from 1 through $cantidad-flotantes {
+        span:nth-child(#{$i}) {
+            top: math.random(90) * 1%;
+            left: math.random(94) * 1%;
+            font-size: (1 + math.random(18) * 0.1) * 1rem;
+            animation-duration: (8 + math.random(10)) * 1s;
+            animation-delay: math.random(8) * -1s;
+        }
+    }
+}
+
+// El perrito que cruza caminando por abajo (arriba de la barra en el celular).
+// Selector doble para ganarle a ".decoracion span" sin usar !important.
+.decoracion .decoracion__paseo {
+    top: auto;
+    bottom: calc(#{$alto-nav} + 10px);
+    left: 0;
+    font-size: 2rem;
+    opacity: 0.35;
+    animation:
+        pasear 22s linear 4s infinite backwards,
+        trotar 0.4s ease-in-out infinite;
+
+    @media (min-width: $breakpoint-escritorio) {
+        bottom: 14px;
+    }
+}
+
+// Si el celular pide menos movimiento, la decoración queda quieta y el perrito no pasea.
+@media (prefers-reduced-motion: reduce) {
+    .decoracion span {
+        animation: none;
+    }
+
+    .decoracion .decoracion__paseo {
+        display: none;
+    }
+}

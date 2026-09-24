@@ -1,0 +1,13 @@
+@use "variables" as *;
+
+%tarjeta {
+    background-color: $color-superficie;
+    border: 1px solid $color-borde;
+    border-radius: $radio;
+    box-shadow: $sombra;
+}
+
+%texto-suave {
+    color: $color-texto-suave;
+    font-size: 0.9rem;
+}

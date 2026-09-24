@@ -1,0 +1,95 @@
+rules_version = '2';
+
+// Reglas de seguridad de Firestore para la app de tareas de Mascota Market.
+// Se pegan en Firebase Console > Firestore Database > Reglas > Publicar.
+//
+// Acceso (Firebase Authentication, Correo electrónico/contraseña):
+// - Agustina: agustina@mascotamarket.app con su contraseña.
+// - Las chicas: comparten equipo@mascotamarket.app. La clave del equipo se pone una sola vez por celular
+//   y después cada una elige su nombre. Si hiciera falta cortar el acceso, se inhabilita ese usuario
+//   o se le cambia la clave desde la consola.
+// Cualquier otra cuenta (o nadie logueado) no puede leer ni escribir nada.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function logueada() {
+      return request.auth != null;
+    }
+
+    function esAgustina() {
+      return logueada() && request.auth.token.email == 'agustina@mascotamarket.app';
+    }
+
+    // Agustina o un celular con la sesión del equipo.
+    function esDelEquipo() {
+      return esAgustina()
+        || (logueada() && request.auth.token.email == 'equipo@mascotamarket.app');
+    }
+
+    function registroValido() {
+      return request.resource.data.uid == request.auth.uid
+        && request.resource.data.tipo in ['hecha', 'pospuesta']
+        && request.resource.data.persona in ['ailin', 'sharon', 'sofia', 'agustina']
+        // Solo Agustina puede registrar a su nombre.
+        && (request.resource.data.persona != 'agustina' || esAgustina());
+    }
+
+    match /registros/{id} {
+      allow read: if esDelEquipo();
+      allow create: if esDelEquipo() && registroValido();
+      // Solo se modifica o deshace lo marcado con la misma cuenta (la app además lo limita a cada chica).
+      allow update: if esDelEquipo() && resource.data.uid == request.auth.uid && registroValido();
+      allow delete: if esDelEquipo() && resource.data.uid == request.auth.uid;
+    }
+
+    // Tareas agregadas desde la app: todas las ven, solo Agustina las crea o quita.
+    match /tareas/{id} {
+      allow read: if esDelEquipo();
+      allow write: if esAgustina();
+    }
+
+    // Notas de cambio de turno: todas las leen; se edita o borra solo lo escrito con la misma cuenta.
+    match /notasTurno/{id} {
+      allow read: if esDelEquipo();
+      allow create: if esDelEquipo()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.local in ['diagonal', 'rivadavia']
+        && request.resource.data.persona in ['ailin', 'sharon', 'sofia', 'agustina']
+        && (request.resource.data.persona != 'agustina' || esAgustina())
+        && request.resource.data.texto is string
+        && request.resource.data.texto.size() <= 1500;
+      allow update: if esDelEquipo() && resource.data.uid == request.auth.uid
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.texto is string
+        && request.resource.data.texto.size() <= 1500;
+      allow delete: if esDelEquipo() && resource.data.uid == request.auth.uid;
+    }
+
+    // Agenda del calendario: todas la ven, solo Agustina agrega o quita.
+    match /agenda/{id} {
+      allow read: if esDelEquipo();
+      allow write: if esAgustina();
+    }
+
+    // Stock: por ahora todas lo pueden ver, cargar, modificar y borrar.
+    match /stock/{id} {
+      allow read, delete: if esDelEquipo();
+      allow create, update: if esDelEquipo()
+        && request.resource.data.local in ['diagonal', 'rivadavia']
+        && request.resource.data.nombre is string
+        && request.resource.data.nombre.size() <= 80
+        && request.resource.data.cantidad is number
+        && request.resource.data.cantidad >= 0;
+    }
+
+    // Bloc de notas de Agustina: privado, nadie más lo puede leer.
+    match /notasDuena/{id} {
+      allow read, write: if esAgustina();
+    }
+
+    // Cualquier otra colección queda cerrada.
+    match /{documento=**} {
+      allow read, write: if false;
+    }
+  }
+}

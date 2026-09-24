@@ -1,0 +1,85 @@
+@use "../utilities/variables" as *;
+@use "../utilities/mixins" as *;
+@use "../utilities/extend";
+
+// Notas de cambio de turno, agenda de Agustina y su bloc de notas.
+.nota {
+    @extend %tarjeta;
+    @include flex(column, $gap: 6px);
+    padding: 12px 14px;
+    border-left: 5px solid $color-primario-claro;
+
+    &--diagonal {
+        border-left-color: $color-diagonal;
+    }
+
+    &--rivadavia {
+        border-left-color: $color-rivadavia;
+    }
+
+    &--agenda {
+        border-left-color: $color-primario;
+        background-color: $color-primario-suave;
+
+        &.is-hecha {
+            border-left-color: $color-ok;
+            background-color: $color-ok-fondo;
+
+            .nota__texto {
+                text-decoration: line-through;
+                color: $color-texto-suave;
+            }
+        }
+
+        &.is-atrasada {
+            border-left-color: $color-atrasada;
+            background-color: $color-atrasada-fondo;
+        }
+    }
+
+    &__meta {
+        @extend %texto-suave;
+        font-size: 0.8rem;
+        font-weight: 700;
+    }
+
+    // Respeta los saltos de línea que escribieron.
+    &__texto {
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+    }
+
+    &__acciones {
+        @include flex(row, flex-end, center, 6px);
+    }
+
+    &__edicion {
+        @include flex(column, $gap: 8px);
+
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid $color-primario-claro;
+            border-radius: $radio-medio;
+            background-color: $color-superficie;
+            color: $color-texto;
+            font: inherit;
+            resize: vertical;
+        }
+    }
+
+    &__borrar {
+        align-self: flex-end;
+        padding: 4px 10px;
+        border: 1px solid $color-borde;
+        border-radius: $radio-pildora;
+        background: transparent;
+        color: $color-texto-suave;
+        font-size: 0.8rem;
+        cursor: pointer;
+
+        &:hover {
+            @include colores($color-atrasada-fondo, $color-atrasada);
+        }
+    }
+}

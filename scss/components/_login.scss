@@ -1,0 +1,134 @@
+@use "../utilities/variables" as *;
+@use "../utilities/mixins" as *;
+@use "../utilities/extend";
+
+.login,
+.bienvenida {
+    @include flex(column, center, stretch, 20px);
+    min-height: 100vh;
+    max-width: 420px;
+    margin: 0 auto;
+    padding: $espaciado;
+}
+
+.login {
+    &__marca {
+        text-align: center;
+
+        p {
+            @extend %texto-suave;
+        }
+    }
+
+    &__logo {
+        @include logo-redondo(min(220px, 60vw));
+        display: block;
+        margin: 0 auto 8px;
+        box-shadow: $sombra;
+
+        &--emoji {
+            font-size: 3rem;
+            box-shadow: none;
+        }
+    }
+
+    &__form,
+    &__personas {
+        @extend %tarjeta;
+        @include flex(column, $gap: 14px);
+        padding: 20px;
+    }
+
+    label {
+        @include flex(column, $gap: 6px);
+        font-weight: 700;
+    }
+
+    input {
+        padding: 12px;
+        border: 1px solid $color-borde;
+        border-radius: $radio-medio;
+    }
+
+    &__error {
+        color: $color-atrasada;
+        font-weight: 700;
+    }
+}
+
+.bienvenida {
+    &__tarjeta {
+        @extend %tarjeta;
+        @include flex(column, $gap: 14px);
+        padding: 24px;
+    }
+
+    &__logo {
+        @include logo-redondo(150px);
+        align-self: center;
+        box-shadow: $sombra;
+    }
+
+    &__hola {
+        font-weight: 800;
+        color: $color-primario;
+    }
+}
+
+.modal {
+    @include flex(column, center, center);
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+    padding: $espaciado;
+    background-color: $color-velo;
+
+    &__caja {
+        @extend %tarjeta;
+        @include flex(column, $gap: 14px);
+        width: 100%;
+        max-width: 460px;
+        padding: 24px;
+    }
+
+    &__opciones {
+        @include flex(column, $gap: 8px);
+    }
+
+    textarea {
+        padding: 10px;
+        border: 1px solid $color-borde;
+        border-radius: $radio-medio;
+        resize: vertical;
+    }
+}
+
+.login__pregunta {
+    text-align: center;
+    font-weight: 800;
+    font-size: 1.1rem;
+    color: $color-primario-oscuro;
+}
+
+.login__duena {
+    align-self: center;
+    padding: 8px 16px;
+    border: none;
+    background: none;
+    color: $color-texto-suave;
+    font-weight: 700;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.login__ayuda {
+    text-align: center;
+    color: $color-texto-suave;
+}
+
+.login__codigo {
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: 0.6em;
+    text-align: center;
+}

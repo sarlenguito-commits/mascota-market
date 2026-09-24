@@ -1,0 +1,310 @@
+@use "../utilities/variables" as *;
+@use "../utilities/mixins" as *;
+@use "../utilities/extend";
+
+.bloque {
+    @include flex(column, $gap: 10px);
+
+    &__titulo {
+        @include flex(row, space-between, baseline, 8px);
+        flex-wrap: wrap;
+        color: $color-primario-oscuro;
+
+        &--atrasada {
+            color: $color-atrasada;
+        }
+
+        &--pospuesta {
+            color: $color-pospuesta;
+        }
+
+        &--agenda {
+            color: $color-primario-oscuro;
+        }
+    }
+
+    &__meta {
+        @extend %texto-suave;
+        font-weight: 600;
+    }
+
+    // En computadora, las tarjetas de cada sección van en dos columnas.
+    @include escritorio {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+
+        > h2,
+        > h3,
+        > p {
+            grid-column: 1 / -1;
+        }
+    }
+}
+
+// Tarea en formato lista: círculo · nombre · acción
+.tarea {
+    @extend %tarjeta;
+    @include flex(column, $gap: 8px);
+    padding: 12px 14px;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+
+    // Celular: círculo + nombre arriba y las acciones en un renglón abajo.
+    // Computadora: todo en una sola fila.
+    &__fila {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        align-items: center;
+        gap: 8px 12px;
+
+        @include escritorio {
+            grid-template-columns: auto minmax(0, 1fr) auto;
+        }
+    }
+
+    &__info {
+        @include flex(column, $gap: 3px);
+        flex: 1;
+        min-width: 0;
+    }
+
+    &__nombre {
+        font-size: 1rem;
+        line-height: 1.3;
+    }
+
+    &__detalle {
+        @include flex(row, $align: center, $gap: 6px);
+        flex-wrap: wrap;
+        color: $color-texto-suave;
+        font-size: 0.8rem;
+    }
+
+    &__nota {
+        padding: 4px 10px;
+        border-radius: $radio-medio;
+        background-color: $color-primario-suave;
+        color: $color-primario-oscuro;
+        font-size: 0.85rem;
+    }
+
+    &__acciones {
+        @include flex(row, $align: center, $gap: 6px);
+        grid-column: 2;
+
+        &:empty {
+            display: none;
+        }
+
+        @include escritorio {
+            grid-column: 3;
+        }
+    }
+
+    &__icono {
+        width: 32px;
+        height: 32px;
+        border: 1px solid $color-borde;
+        border-radius: 50%;
+        background: none;
+        font-size: 0.95rem;
+        cursor: pointer;
+        opacity: 0.7;
+        transition: opacity $transicion, background-color $transicion;
+
+        &:hover,
+        &.is-activo {
+            opacity: 1;
+            background-color: $color-primario-suave;
+        }
+    }
+
+    &__campo-nota {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid $color-primario-claro;
+        border-radius: $radio-medio;
+        background-color: $color-superficie;
+        color: $color-texto;
+        font: inherit;
+        resize: vertical;
+
+        &:focus {
+            outline: 2px solid $color-primario-claro;
+        }
+    }
+
+    &.is-hecha {
+        border-color: $color-ok;
+        background-color: $color-ok-fondo;
+
+        .tarea__nombre {
+            color: $color-texto-suave;
+            text-decoration: line-through;
+        }
+    }
+
+    &.is-atrasada {
+        border-color: $color-atrasada;
+        background-color: $color-atrasada-fondo;
+    }
+
+    &.is-pospuesta {
+        border-color: $color-pospuesta;
+        background-color: $color-pospuesta-fondo;
+    }
+
+    &.is-hoy {
+        box-shadow: 0 0 0 2px $color-primario-claro;
+    }
+}
+
+// Círculo para tildar
+.check {
+    @include flex(row, center, center);
+    flex: none;
+    width: 30px;
+    height: 30px;
+    border: 2.5px solid $color-primario;
+    border-radius: 50%;
+    background: none;
+    color: $color-blanco;
+    font-size: 1.05rem;
+    cursor: pointer;
+    transition: transform 0.25s $curva-rebote, background-color $transicion;
+
+    &:hover {
+        transform: scale(1.12);
+        background-color: $color-primario-suave;
+    }
+
+    &.is-ok {
+        border-color: $color-ok;
+        background-color: $color-ok;
+        cursor: default;
+    }
+
+    // Tablero de Locales: solo muestra que está pendiente (no se toca)
+    &.is-vacio {
+        border-color: $color-borde;
+        cursor: default;
+
+        &:hover {
+            transform: none;
+            background: none;
+        }
+    }
+
+    &.is-pos {
+        border-color: $color-pospuesta;
+        background-color: $color-pospuesta;
+        cursor: default;
+    }
+}
+
+// Botón chico en forma de pastilla ("No lo hice", "Deshacer")
+.pildora {
+    padding: 6px 12px;
+    border: 1px solid $color-borde;
+    border-radius: $radio-pildora;
+    background-color: $color-superficie;
+    color: $color-texto-suave;
+    font-size: 0.8rem;
+    font-weight: 700;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background-color $transicion;
+
+    &:hover {
+        background-color: $color-fondo;
+    }
+
+    &--no {
+        border-color: $color-pospuesta;
+        color: $color-pospuesta;
+
+        &:hover {
+            background-color: $color-pospuesta-fondo;
+        }
+    }
+}
+
+.chip {
+    @include colores($color-primario-suave, $color-primario-oscuro);
+    padding: 1px 8px;
+    border-radius: $radio-pildora;
+    font-size: 0.75rem;
+    font-weight: 700;
+
+    &--diagonal {
+        @include colores($color-diagonal, $color-blanco);
+    }
+
+    &--rivadavia {
+        @include colores($color-rivadavia, $color-blanco);
+    }
+
+    &--tuya {
+        @include colores($color-primario-suave, $color-primario-oscuro);
+        border: 1px dashed $color-primario-claro;
+        white-space: nowrap;
+    }
+
+    &--persona {
+        @include colores($color-primario, $color-blanco);
+    }
+}
+
+// Cada local en su propio bloque, bien separado del otro.
+.locales {
+    @include flex(column, $gap: 36px);
+
+    @include escritorio {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        align-items: start;
+        gap: 28px;
+    }
+}
+
+.local {
+    @include flex(column);
+    border-radius: 20px;
+    overflow: hidden;
+
+    &__cabecera {
+        padding: 16px 18px;
+        color: $color-blanco;
+
+        h2 {
+            font-size: 1.35rem;
+        }
+
+        p {
+            font-size: 0.9rem;
+            font-weight: 600;
+            opacity: 0.95;
+        }
+    }
+
+    &__cuerpo {
+        @include flex(column, $gap: 12px);
+        padding: 16px;
+    }
+
+    &--diagonal {
+        background-color: $color-diagonal-fondo;
+
+        .local__cabecera {
+            background-color: $color-diagonal;
+        }
+    }
+
+    &--rivadavia {
+        background-color: $color-rivadavia-fondo;
+
+        .local__cabecera {
+            background-color: $color-rivadavia;
+        }
+    }
+}

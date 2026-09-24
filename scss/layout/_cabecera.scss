@@ -1,0 +1,217 @@
+@use "../utilities/variables" as *;
+@use "../utilities/mixins" as *;
+
+.cabecera {
+    @include flex(row, space-between, center);
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    padding: 12px $espaciado;
+    background-color: $color-primario;
+    color: $color-blanco;
+    box-shadow: $sombra;
+
+    // Logo grande que lleva al inicio (Hoy / Actividad)
+    &__marca {
+        @include flex(row, $align: center, $gap: 10px);
+        padding: 0;
+        border: none;
+        background: none;
+        color: $color-blanco;
+        font-weight: 800;
+        font-size: 1.15rem;
+        cursor: pointer;
+
+        &:hover .cabecera__logo,
+        &:focus-visible .cabecera__logo {
+            transform: scale(1.08) rotate(-4deg);
+            box-shadow: 0 0 0 3px $color-borde-claro, 0 6px 18px rgba(0, 0, 0, 0.25);
+        }
+    }
+
+    // El logo ya dice "Mascota Market": si carga, se oculta el texto.
+    &__logo {
+        @include logo-redondo(64px);
+        transition: transform 0.3s $curva-rebote, box-shadow 0.3s ease;
+
+        + span {
+            display: none;
+        }
+
+        @include escritorio {
+            width: 88px;
+            height: 88px;
+        }
+    }
+
+    &__acciones {
+        @include flex(row, $align: center, $gap: 6px);
+    }
+
+    @include escritorio {
+        padding: 14px max(#{$espaciado}, calc((100% - #{$ancho-max-escritorio}) / 2 + #{$espaciado}));
+    }
+}
+
+// Quién está usando la app + botón para salir
+.usuario {
+    @include flex(row, $align: center, $gap: 8px);
+    padding: 3px 3px 3px 3px;
+    border: 1px solid $color-borde-claro;
+    border-radius: $radio-pildora;
+    background-color: $color-blanco-translucido;
+
+    // Selector doble: le gana al tamaño del avatar del muro (misma clase de color)
+    .usuario__avatar {
+        width: 32px;
+        height: 32px;
+        font-size: 0.75rem;
+        box-shadow: 0 0 0 2px $color-blanco;
+    }
+
+    &__nombre {
+        color: $color-blanco;
+        font-size: 1.05rem;
+        font-weight: 800;
+        white-space: nowrap;
+    }
+
+    &__salir {
+        @include flex(row, $align: center, $gap: 4px);
+        padding: 6px 9px;
+        border: none;
+        border-radius: $radio-pildora;
+        background-color: $color-blanco;
+        color: #5F4DA6;
+        font-weight: 800;
+        cursor: pointer;
+        transition: transform $transicion;
+
+        &:hover {
+            transform: scale(1.05);
+        }
+    }
+
+    // En el celular "Salir" queda solo como ícono y no se muestran las iniciales
+    &__salir-texto {
+        display: none;
+    }
+
+    @media (max-width: 599px) {
+        padding-left: 12px;
+
+        .usuario__avatar {
+            display: none;
+        }
+
+        &__nombre {
+            font-size: 1rem;
+        }
+    }
+
+    @include escritorio {
+        gap: 10px;
+        padding-left: 4px;
+
+        .usuario__avatar {
+            width: 40px;
+            height: 40px;
+            font-size: 0.85rem;
+        }
+
+        &__nombre {
+            font-size: 1.3rem;
+        }
+
+        &__salir {
+            padding: 8px 14px;
+        }
+
+        &__salir-texto {
+            display: inline;
+        }
+    }
+}
+
+// Interruptor de tema: "☀️ Claro | 🌙 Oscuro", con la opción activa en blanco.
+.tema {
+    @include flex(row, $align: center);
+    padding: 3px;
+    border: 1px solid $color-borde-claro;
+    border-radius: $radio-pildora;
+    background-color: $color-blanco-translucido;
+    cursor: pointer;
+
+    &__opcion {
+        padding: 6px 8px;
+        border-radius: $radio-pildora;
+        color: $color-blanco;
+        font-size: 0.74rem;
+        font-weight: 800;
+        white-space: nowrap;
+        transition: background-color 0.25s ease, color 0.25s ease;
+
+        &.is-activa {
+            background-color: $color-blanco;
+            color: #5F4DA6;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+    }
+
+    // En el celular, solo los íconos (así entra el nombre de quién está usando la app)
+    @media (max-width: 599px) {
+        &__texto {
+            display: none;
+        }
+    }
+
+    @include escritorio {
+        &__opcion {
+            padding: 8px 16px;
+            font-size: 0.95rem;
+        }
+    }
+}
+
+.icono {
+    padding: 6px 12px;
+    border: 1px solid $color-borde-claro;
+    border-radius: $radio-pildora;
+    background: transparent;
+    color: $color-blanco;
+    font-weight: 700;
+    cursor: pointer;
+
+    &--oscuro {
+        border-color: $color-borde;
+        color: $color-primario-oscuro;
+        font-size: 1.3rem;
+        line-height: 1;
+        padding: 4px 14px;
+    }
+}
+
+.contenido {
+    @include flex(column, $gap: 22px);
+    max-width: $ancho-max;
+    margin: 0 auto;
+    padding: $espaciado $espaciado calc(#{$alto-nav} + 32px);
+
+    @include escritorio {
+        max-width: $ancho-max-escritorio;
+        gap: 28px;
+        padding-bottom: 56px;
+    }
+}
+
+// Celulares muy angostos: logo un poco más chico y sin el botón ℹ️ (el texto se ve al entrar)
+@media (max-width: 399px) {
+    .cabecera__logo {
+        width: 52px;
+        height: 52px;
+    }
+
+    #btn-info {
+        display: none;
+    }
+}

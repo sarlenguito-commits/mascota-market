@@ -1,0 +1,34 @@
+@use "variables" as *;
+
+// Flexbox con parámetros. Los que quedan en null no se escriben en el CSS.
+@mixin flex($direccion: row, $justify: null, $align: null, $gap: null) {
+    display: flex;
+    flex-direction: $direccion;
+    justify-content: $justify;
+    align-items: $align;
+    gap: $gap;
+}
+
+// Colores de fondo y texto para chips y estados.
+@mixin colores($fondo, $color) {
+    background-color: $fondo;
+    color: $color;
+}
+
+// Pantallas de computadora.
+@mixin escritorio {
+    @media (min-width: $breakpoint-escritorio) {
+        @content;
+    }
+}
+
+// Logo dentro de un círculo blanco. El logo es horizontal: "contain" lo encaja
+// entero y el padding le deja aire hasta el borde del círculo.
+@mixin logo-redondo($tamano) {
+    width: $tamano;
+    height: $tamano;
+    padding: calc(#{$tamano} * 0.06);
+    border-radius: 50%;
+    background-color: $color-blanco;
+    object-fit: contain;
+}

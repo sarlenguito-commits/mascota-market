@@ -1,0 +1,111 @@
+@use "../utilities/variables" as *;
+@use "../utilities/mixins" as *;
+
+// Encabezado grande "Hoy es…"
+.hoy {
+    @include flex(column, $gap: 12px);
+    padding: 22px 20px;
+    border-radius: 22px;
+    background: $degrade-hoy;
+    color: $color-blanco;
+    box-shadow: $sombra-hoy;
+
+    &__saludo {
+        font-size: 1.15rem;
+        font-weight: 700;
+        opacity: 0.95;
+    }
+
+    &__fecha {
+        @include flex(row, $align: center, $gap: 14px);
+    }
+
+    &__numero {
+        font-size: 4.2rem;
+        font-weight: 800;
+        line-height: 0.9;
+    }
+
+    &__textos {
+        @include flex(column);
+    }
+
+    &__dia {
+        font-size: 1.6rem;
+        font-weight: 800;
+        text-transform: capitalize;
+    }
+
+    &__mes {
+        font-size: 1rem;
+        font-weight: 600;
+        opacity: 0.9;
+        text-transform: capitalize;
+    }
+
+    &__chips {
+        @include flex(row, $gap: 8px);
+        flex-wrap: wrap;
+    }
+
+    &__chip {
+        padding: 6px 12px;
+        border-radius: $radio-pildora;
+        background-color: $color-blanco-translucido;
+        font-size: 0.85rem;
+        font-weight: 700;
+    }
+
+    &__progreso {
+        @include flex(row, $align: center, $gap: 14px);
+
+        p {
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .barra {
+            background-color: $color-blanco-translucido;
+        }
+
+        .barra__relleno {
+            background-color: $color-blanco;
+        }
+    }
+
+    @include escritorio {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        grid-template-areas:
+            "saludo saludo"
+            "fecha chips"
+            "progreso progreso";
+        align-items: center;
+        column-gap: 32px;
+        padding: 28px 32px;
+
+        &__saludo { grid-area: saludo; }
+        &__fecha { grid-area: fecha; }
+        &__chips { grid-area: chips; }
+        &__progreso { grid-area: progreso; }
+
+        &__numero {
+            font-size: 5rem;
+        }
+    }
+}
+
+.barra {
+    height: 10px;
+    border-radius: $radio-pildora;
+    background-color: $color-primario-suave;
+    overflow: hidden;
+
+    &__relleno {
+        display: block;
+        height: 100%;
+        border-radius: $radio-pildora;
+        background-color: $color-primario;
+        transition: width 0.4s ease;
+    }
+}

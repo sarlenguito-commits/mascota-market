@@ -1,0 +1,113 @@
+@use "../utilities/variables" as *;
+@use "../utilities/mixins" as *;
+@use "../utilities/extend";
+
+.aviso {
+    padding: 12px 14px;
+    border-radius: $radio-medio;
+    background-color: $color-primario-suave;
+    font-size: 0.95rem;
+
+    &--prueba {
+        border: 1px dashed $color-primario-claro;
+    }
+
+    &__boton {
+        margin-left: 8px;
+        padding: 2px 10px;
+        border: 1px solid $color-primario-claro;
+        border-radius: $radio-pildora;
+        background-color: $color-superficie;
+        color: $color-primario-oscuro;
+        font-size: 0.75rem;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+    &--fino {
+        max-width: $ancho-max;
+        margin: 10px auto 0;
+        padding: 6px 12px;
+        font-size: 0.8rem;
+        text-align: center;
+
+        @include escritorio {
+            max-width: $ancho-max-escritorio;
+        }
+    }
+}
+
+.encabezado {
+    display: grid;
+    gap: 6px;
+
+    h1 {
+        color: $color-primario-oscuro;
+    }
+
+    p {
+        @extend %texto-suave;
+    }
+}
+
+.resumen {
+    padding: 14px 16px;
+    border-radius: $radio;
+    background-color: $color-primario-suave;
+    color: $color-primario-oscuro;
+    font-size: 1.05rem;
+
+    &--ok {
+        @include colores($color-ok-fondo, $color-ok);
+    }
+}
+
+.vacio {
+    @extend %texto-suave;
+    padding: 8px 0;
+}
+
+// Mensaje flotante de confirmación
+// Mensaje flotante. Colores fijos (no cambian con el tema) para que siempre se lea.
+.toast {
+    position: fixed;
+    left: 50%;
+    // En el celular, arriba de la barra de navegación
+    bottom: calc(#{$alto-nav} + 16px);
+    z-index: 20;
+    max-width: calc(100% - 32px);
+    padding: 12px 20px;
+    border-radius: $radio-pildora;
+    background-color: #2B2540;
+    color: $color-blanco;
+    font-weight: 700;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+    transform: translateX(-50%);
+    animation: aparecer 0.25s ease;
+
+    // Tarea aplazada: ámbar
+    &--aplazada {
+        background-color: #B9742A;
+    }
+
+    // Confirmaciones (tarea hecha, guardado): verde
+    &--ok {
+        background-color: #2F8A5B;
+    }
+
+    @include escritorio {
+        bottom: 24px;
+    }
+}
+
+@keyframes aparecer {
+    from {
+        opacity: 0;
+        transform: translate(-50%, 10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translate(-50%, 0);
+    }
+}

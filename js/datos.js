@@ -1,0 +1,312 @@
+// ============================================
+// Capa de datos: Firebase (real) o modo prueba (localStorage).
+// El resto de la app usa solo estas funciones, sin importar el modo.
+// ============================================
+import {
+    firebaseConfig,
+    DOMINIO_LOGIN,
+    USUARIO_EQUIPO,
+    PERSONAS,
+    CLAVE_EQUIPO_PRUEBA,
+    INTENTOS_MAXIMOS,
+    MINUTOS_BLOQUEO
+} from "./config.js";
+
+export const modoPrueba = !firebaseConfig.apiKey || firebaseConfig.apiKey === "PEGAR_AQUI";
+
+const SDK = "https://www.gstatic.com/firebasejs/10.12.2";
+let fb = null; // módulos y referencias de Firebase, cargados solo si hay configuración
+
+async function cargarFirebase() {
+    if (fb) return fb;
+    const [{ initializeApp }, authMod, fsMod] = await Promise.all([
+        import(`${SDK}/firebase-app.js`),
+        import(`${SDK}/firebase-auth.js`),
+        import(`${SDK}/firebase-firestore.js`)
+    ]);
+    const app = initializeApp(firebaseConfig);
+    fb = { auth: authMod.getAuth(app), db: fsMod.getFirestore(app), authMod, fsMod };
+    await authMod.setPersistence(fb.auth, authMod.browserLocalPersistence);
+    return fb;
+}
+
+const personaDeEmail = (email) => {
+    const id = (email || "").split("@")[0].toLowerCase();
+    return PERSONAS[id] ? id : null;
+};
+
+// ---------- Sesión ----------
+// Agustina (dueña) entra con su usuario y contraseña.
+// Las chicas comparten el usuario del equipo: la clave se pone una sola vez por celular (Firebase recuerda
+// la sesión) y después cada una elige su nombre, que queda guardado en este celular.
+
+const CLAVE_PERSONA = "mm-persona";
+const CLAVE_INTENTOS = "mm-intentos";
+const EMAIL_EQUIPO = `${USUARIO_EQUIPO}@${DOMINIO_LOGIN}`;
+export const necesitaClave = (personaId) => PERSONAS[personaId]?.rol === "duena";
+
+// ¿Este celular ya tiene la sesión del equipo? (entonces las chicas entran solo tocando su nombre)
+let equipoLogueado = false;
+export const equipoVerificado = () => (modoPrueba ? localStorage.getItem("mm-demo-equipo") === "ok" : equipoLogueado);
+
+// ---------- Bloqueo por intentos fallidos (en este celular) ----------
+
+function leerIntentos() {
+    try { return JSON.parse(localStorage.getItem(CLAVE_INTENTOS)) || { fallos: 0, hasta: 0 }; } catch { return { fallos: 0, hasta: 0 }; }
+}
+
+/** Minutos que faltan si este celular está bloqueado por intentos fallidos (0 = no está bloqueado). */
+export function minutosBloqueado() {
+    const { hasta } = leerIntentos();
+    return hasta > Date.now() ? Math.ceil((hasta - Date.now()) / 60000) : 0;
+}
+
+function registrarFallo() {
+    const i = leerIntentos();
+    i.fallos += 1;
+    if (i.fallos >= INTENTOS_MAXIMOS) {
+        i.fallos = 0;
+        i.hasta = Date.now() + MINUTOS_BLOQUEO * 60000;
+    }
+    localStorage.setItem(CLAVE_INTENTOS, JSON.stringify(i));
+    return INTENTOS_MAXIMOS - i.fallos; // intentos que quedan antes del bloqueo
+}
+
+const limpiarFallos = () => localStorage.removeItem(CLAVE_INTENTOS);
+
+/**
+ * Inicia sesión con usuario y clave. Errores: "bloqueado" (demasiados intentos, en este celular o según Firebase)
+ * o "clave:<intentos que quedan>".
+ */
+async function iniciarSesion(email, clave) {
+    if (minutosBloqueado()) throw new Error("bloqueado");
+    if (modoPrueba) {
+        const correcta = email === EMAIL_EQUIPO ? clave === CLAVE_EQUIPO_PRUEBA : !!clave;
+        if (!correcta) {
+            const quedan = registrarFallo();
+            throw new Error(minutosBloqueado() ? "bloqueado" : `clave:${quedan}`);
+        }
+        limpiarFallos();
+        return;
+    }
+    const { auth, authMod } = await cargarFirebase();
+    try {
+        await authMod.signInWithEmailAndPassword(auth, email, clave);
+        limpiarFallos();
+    } catch (e) {
+        // Firebase frena por su cuenta las ráfagas de intentos
+        if (e?.code === "auth/too-many-requests") throw new Error("bloqueado");
+        const quedan = registrarFallo();
+        throw new Error(minutosBloqueado() ? "bloqueado" : `clave:${quedan}`);
+    }
+}
+
+// cb(personaId | null) cada vez que cambia la sesión.
+export async function escucharSesion(cb) {
+    if (modoPrueba) {
+        cb(localStorage.getItem("mm-demo-usuario"));
+        return;
+    }
+    const { auth, authMod } = await cargarFirebase();
+    authMod.onAuthStateChanged(auth, (user) => {
+        equipoLogueado = user?.email === EMAIL_EQUIPO;
+        if (!user) return cb(null);
+        if (equipoLogueado) {
+            const persona = localStorage.getItem(CLAVE_PERSONA);
+            return cb(PERSONAS[persona] && !necesitaClave(persona) ? persona : null);
+        }
+        cb(personaDeEmail(user.email));
+    });
+}
+
+// Chicas: entrar(persona) si el celular ya tiene la sesión del equipo, o entrar(persona, claveDelEquipo) la primera vez.
+// Agustina: entrar("agustina", clave).
+export async function entrar(persona, clave = "") {
+    if (necesitaClave(persona)) {
+        await iniciarSesion(`${persona}@${DOMINIO_LOGIN}`, clave);
+        if (modoPrueba) localStorage.setItem("mm-demo-usuario", persona);
+        return;
+    }
+    if (!equipoVerificado()) {
+        await iniciarSesion(EMAIL_EQUIPO, clave);
+        if (modoPrueba) localStorage.setItem("mm-demo-equipo", "ok");
+    }
+    if (modoPrueba) {
+        localStorage.setItem("mm-demo-usuario", persona);
+        return;
+    }
+    localStorage.setItem(CLAVE_PERSONA, persona);
+    location.reload();
+}
+
+export async function salir() {
+    if (modoPrueba) {
+        localStorage.removeItem("mm-demo-usuario");
+        return;
+    }
+    localStorage.removeItem(CLAVE_PERSONA);
+    const { auth, authMod } = await cargarFirebase();
+    // La sesión del equipo se conserva: la próxima chica entra tocando su nombre, sin volver a poner la clave.
+    if (auth.currentUser && auth.currentUser.email !== EMAIL_EQUIPO) await authMod.signOut(auth);
+}
+
+export function uidActual() {
+    return modoPrueba ? "demo-" + localStorage.getItem("mm-demo-usuario") : fb?.auth.currentUser?.uid;
+}
+
+// ---------- Registros (tareas hechas) ----------
+
+const leerDemo = () => {
+    try { return JSON.parse(localStorage.getItem("mm-demo-registros")) || {}; } catch { return {}; }
+};
+const guardarDemo = (regs) => localStorage.setItem("mm-demo-registros", JSON.stringify(regs));
+
+// cb(registros[]) en tiempo real. desdeFecha: "YYYY-MM-DD" (trae de esa fecha en adelante).
+export async function escucharRegistros(desdeFecha, cb) {
+    if (modoPrueba) {
+        const emitir = () => cb(Object.values(leerDemo()).filter((r) => r.fecha >= desdeFecha));
+        emitir();
+        window.addEventListener("storage", (e) => e.key === "mm-demo-registros" && emitir());
+        window.addEventListener("mm-demo-cambio", emitir);
+        return;
+    }
+    const { db, fsMod } = await cargarFirebase();
+    const q = fsMod.query(fsMod.collection(db, "registros"), fsMod.where("fecha", ">=", desdeFecha));
+    fsMod.onSnapshot(q, (snap) => cb(snap.docs.map((d) => ({ id: d.id, ...d.data() }))));
+}
+
+export async function marcar(registro) {
+    const datos = { ...registro, uid: uidActual() };
+    if (modoPrueba) {
+        const regs = leerDemo();
+        regs[registro.id] = datos;
+        guardarDemo(regs);
+        window.dispatchEvent(new Event("mm-demo-cambio"));
+        return;
+    }
+    const { db, fsMod } = await cargarFirebase();
+    const { id, ...resto } = datos;
+    await fsMod.setDoc(fsMod.doc(db, "registros", id), { ...resto, creado: fsMod.serverTimestamp() });
+}
+
+export async function desmarcar(id) {
+    if (modoPrueba) {
+        const regs = leerDemo();
+        delete regs[id];
+        guardarDemo(regs);
+        window.dispatchEvent(new Event("mm-demo-cambio"));
+        return;
+    }
+    const { db, fsMod } = await cargarFirebase();
+    await fsMod.deleteDoc(fsMod.doc(db, "registros", id));
+}
+
+// ---------- Tareas agregadas por Agustina ----------
+
+const leerTareasDemo = () => {
+    try { return JSON.parse(localStorage.getItem("mm-demo-tareas")) || {}; } catch { return {}; }
+};
+
+// cb(tareas[]) en tiempo real.
+export async function escucharTareasExtra(cb) {
+    if (modoPrueba) {
+        const emitir = () => cb(Object.values(leerTareasDemo()));
+        emitir();
+        window.addEventListener("storage", (e) => e.key === "mm-demo-tareas" && emitir());
+        window.addEventListener("mm-demo-tareas", emitir);
+        return;
+    }
+    const { db, fsMod } = await cargarFirebase();
+    fsMod.onSnapshot(fsMod.collection(db, "tareas"), (snap) => cb(snap.docs.map((d) => ({ id: d.id, ...d.data() }))));
+}
+
+export async function guardarTareaExtra(tarea) {
+    if (modoPrueba) {
+        const todas = leerTareasDemo();
+        todas[tarea.id] = tarea;
+        localStorage.setItem("mm-demo-tareas", JSON.stringify(todas));
+        window.dispatchEvent(new Event("mm-demo-tareas"));
+        return;
+    }
+    const { db, fsMod } = await cargarFirebase();
+    const { id, ...resto } = tarea;
+    await fsMod.setDoc(fsMod.doc(db, "tareas", id), resto);
+}
+
+export async function borrarTareaExtra(id) {
+    if (modoPrueba) {
+        const todas = leerTareasDemo();
+        delete todas[id];
+        localStorage.setItem("mm-demo-tareas", JSON.stringify(todas));
+        window.dispatchEvent(new Event("mm-demo-tareas"));
+        return;
+    }
+    const { db, fsMod } = await cargarFirebase();
+    await fsMod.deleteDoc(fsMod.doc(db, "tareas", id));
+}
+
+// ---------- Colecciones simples ----------
+// "notasTurno"  → notas de cambio de turno (las escribe cualquiera del equipo)
+// "agenda"      → cosas que Agustina agrega al calendario de cada una
+// "notasDuena"  → bloc de notas privado de Agustina
+// "stock"       → productos y cantidades (todas pueden modificar)
+// Mismo manejo en los dos modos: en prueba se guardan en localStorage (mm-demo-<coleccion>).
+
+export const COLECCIONES = ["notasTurno", "agenda", "notasDuena", "stock"];
+const claveDemo = (col) => `mm-demo-${col}`;
+const leerColDemo = (col) => {
+    try { return JSON.parse(localStorage.getItem(claveDemo(col))) || {}; } catch { return {}; }
+};
+const avisarColDemo = (col) => window.dispatchEvent(new Event(claveDemo(col)));
+
+// cb(docs[]) en tiempo real.
+export async function escucharColeccion(col, cb) {
+    if (modoPrueba) {
+        const emitir = () => cb(Object.values(leerColDemo(col)));
+        emitir();
+        window.addEventListener("storage", (e) => e.key === claveDemo(col) && emitir());
+        window.addEventListener(claveDemo(col), emitir);
+        return;
+    }
+    const { db, fsMod } = await cargarFirebase();
+    fsMod.onSnapshot(fsMod.collection(db, col), (snap) => cb(snap.docs.map((d) => ({ id: d.id, ...d.data() }))));
+}
+
+export async function guardarEn(col, docu) {
+    const datos = { ...docu, uid: uidActual() };
+    if (modoPrueba) {
+        const todos = leerColDemo(col);
+        todos[docu.id] = datos;
+        localStorage.setItem(claveDemo(col), JSON.stringify(todos));
+        avisarColDemo(col);
+        return;
+    }
+    const { db, fsMod } = await cargarFirebase();
+    const { id, ...resto } = datos;
+    await fsMod.setDoc(fsMod.doc(db, col, id), resto);
+}
+
+export async function borrarDe(col, id) {
+    if (modoPrueba) {
+        const todos = leerColDemo(col);
+        delete todos[id];
+        localStorage.setItem(claveDemo(col), JSON.stringify(todos));
+        avisarColDemo(col);
+        return;
+    }
+    const { db, fsMod } = await cargarFirebase();
+    await fsMod.deleteDoc(fsMod.doc(db, col, id));
+}
+
+// ---------- Solo modo prueba ----------
+
+// Borra lo marcado, las tareas agregadas y las notas de este navegador (no toca la sesión ni el disclaimer).
+export function borrarDatosPrueba() {
+    if (!modoPrueba) return;
+    localStorage.removeItem("mm-demo-registros");
+    localStorage.removeItem("mm-demo-tareas");
+    COLECCIONES.forEach((col) => localStorage.removeItem(claveDemo(col)));
+    window.dispatchEvent(new Event("mm-demo-cambio"));
+    window.dispatchEvent(new Event("mm-demo-tareas"));
+    COLECCIONES.forEach(avisarColDemo);
+}

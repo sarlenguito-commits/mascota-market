@@ -1,0 +1,166 @@
+@use "../utilities/variables" as *;
+@use "../utilities/mixins" as *;
+@use "../utilities/extend";
+
+// Muro de actividad de Agustina.
+
+.progreso-locales {
+    display: grid;
+    gap: 12px;
+
+    @include escritorio {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+.progreso-local {
+    @extend %tarjeta;
+    @include flex(column, $gap: 8px);
+    padding: 12px 14px;
+    border-left: 5px solid $color-primario;
+    border-radius: 0 $radio $radio 0;
+
+    &__texto {
+        @include flex(row, space-between, baseline, 8px);
+
+        span {
+            @extend %texto-suave;
+            font-size: 0.85rem;
+        }
+    }
+
+    // Cada local con su color
+    @each $local, $color, $fondo in (diagonal $color-diagonal $color-diagonal-fondo, rivadavia $color-rivadavia $color-rivadavia-fondo) {
+        &--#{$local} {
+            border-left-color: $color;
+
+            .barra {
+                background-color: $fondo;
+            }
+
+            .barra__relleno {
+                background-color: $color;
+            }
+        }
+    }
+}
+
+.filtros {
+    @include flex(row, $gap: 8px);
+    flex-wrap: wrap;
+
+    &__item {
+        padding: 8px 16px;
+        border: 1px solid $color-borde;
+        border-radius: $radio-pildora;
+        background-color: $color-superficie;
+        color: $color-texto-suave;
+        font-weight: 800;
+        cursor: pointer;
+        transition: background-color $transicion, color $transicion;
+
+        &.is-activo {
+            @include colores($color-primario, $color-blanco);
+            border-color: $color-primario;
+        }
+    }
+}
+
+.muro {
+    @include flex(column, $gap: 10px);
+
+    &__dia {
+        margin-top: 8px;
+        color: $color-texto-suave;
+        font-size: 0.85rem;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+    }
+}
+
+.evento {
+    @extend %tarjeta;
+    @include flex(row, $gap: 12px);
+    padding: 12px 14px;
+    border-left: 4px solid $color-primario-claro;
+    border-radius: 0 $radio $radio 0;
+
+    &--diagonal {
+        border-left-color: $color-diagonal;
+    }
+
+    &--rivadavia {
+        border-left-color: $color-rivadavia;
+    }
+
+    &__avatar {
+        @include flex(row, center, center);
+        @include colores($color-primario-suave, $color-primario-oscuro);
+        flex: none;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        font-size: 0.8rem;
+        font-weight: 800;
+
+        &--ailin {
+            @include colores($color-rivadavia-fondo, $color-rivadavia);
+        }
+
+        &--sofia {
+            @include colores($color-diagonal-fondo, $color-diagonal);
+        }
+
+        &--agustina {
+            @include colores($color-primario, $color-blanco);
+        }
+    }
+
+    &__cuerpo {
+        @include flex(column, $gap: 4px);
+        min-width: 0;
+
+        small {
+            @extend %texto-suave;
+            font-size: 0.78rem;
+        }
+    }
+
+    &__extra {
+        padding: 6px 10px;
+        border-radius: $radio-medio;
+        background-color: $color-fondo;
+        font-size: 0.9rem;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+    }
+}
+
+// Menú "Más"
+.mas {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+
+    &__item {
+        @extend %tarjeta;
+        @include flex(column, center, center, 8px);
+        padding: 24px 12px;
+        color: $color-primario-oscuro;
+        font-weight: 800;
+        cursor: pointer;
+        transition: transform $transicion;
+
+        &:hover {
+            transform: translateY(-3px);
+        }
+
+        span {
+            font-size: 2rem;
+        }
+    }
+
+    @include escritorio {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}

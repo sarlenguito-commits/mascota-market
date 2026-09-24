@@ -1,0 +1,94 @@
+@use "../utilities/variables" as *;
+@use "../utilities/mixins" as *;
+@use "../utilities/extend";
+
+// Formulario de nueva tarea (Agustina)
+.formulario {
+    @extend %tarjeta;
+    @include flex(column, $gap: 14px);
+    padding: 20px;
+    border-top: 5px solid $color-primario;
+
+    h2 {
+        color: $color-primario-oscuro;
+    }
+
+    label {
+        @include flex(column, $gap: 6px);
+        font-weight: 700;
+
+        small {
+            font-weight: 400;
+            font-size: 0.8rem;
+            color: $color-texto-suave;
+        }
+    }
+
+    input,
+    select,
+    textarea {
+        padding: 11px 12px;
+        border: 1px solid $color-borde;
+        border-radius: $radio-medio;
+        background-color: $color-superficie;
+
+        &:focus {
+            outline: 2px solid $color-primario-claro;
+        }
+    }
+
+    &__fila {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+
+    &__semanas {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+
+        @include escritorio {
+            grid-template-columns: repeat(4, 1fr);
+        }
+    }
+
+    &__ayuda {
+        @extend %texto-suave;
+    }
+
+    textarea {
+        resize: vertical;
+        font: inherit;
+    }
+
+    // Dentro de otra tarjeta (ej: agregar al calendario desde el detalle del día)
+    &--compacto {
+        gap: 10px;
+        margin-top: 6px;
+        padding: 14px;
+        border-top: none;
+        box-shadow: none;
+        background-color: $color-primario-suave;
+    }
+}
+
+.lista-tareas {
+    @include flex(column, $gap: 8px);
+    list-style: none;
+
+    li {
+        @extend %tarjeta;
+        @include flex(row, space-between, center, 10px);
+        padding: 12px 14px;
+
+        div {
+            @include flex(column, $gap: 2px);
+        }
+
+        small {
+            @extend %texto-suave;
+            font-size: 0.8rem;
+        }
+    }
+}

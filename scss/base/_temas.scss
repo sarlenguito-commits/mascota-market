@@ -1,0 +1,28 @@
+@use "../utilities/variables" as *;
+
+// Convierte un mapa de colores en variables CSS: (primario: #7E6BC4) → --primario: #7E6BC4
+@mixin variables-de($tema) {
+    @each $nombre, $valor in $tema {
+        --#{$nombre}: #{$valor};
+    }
+}
+
+// Claro por defecto.
+:root {
+    @include variables-de($tema-claro);
+    color-scheme: light;
+}
+
+// Oscuro si el celular está en modo oscuro (salvo que la persona haya elegido "claro" en la app)…
+@media (prefers-color-scheme: dark) {
+    :root:not([data-tema="claro"]) {
+        @include variables-de($tema-oscuro);
+        color-scheme: dark;
+    }
+}
+
+// …o si lo eligió con el botón 🌙.
+:root[data-tema="oscuro"] {
+    @include variables-de($tema-oscuro);
+    color-scheme: dark;
+}

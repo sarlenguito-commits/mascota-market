@@ -1,0 +1,58 @@
+@use "../utilities/variables" as *;
+
+.boton {
+    flex-shrink: 0;
+    padding: 10px 16px;
+    border: none;
+    border-radius: $radio-pildora;
+    background-color: $color-primario;
+    color: $color-blanco;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color $transicion, transform $transicion;
+
+    &:hover {
+        background-color: $color-primario-oscuro;
+    }
+
+    &:active {
+        transform: scale(0.97);
+    }
+
+    &:disabled {
+        opacity: 0.6;
+        cursor: wait;
+    }
+
+    &--grande {
+        width: 100%;
+        padding: 14px;
+        font-size: 1.05rem;
+    }
+
+    &--suave {
+        background-color: transparent;
+        border: 1px solid $color-borde;
+        color: $color-texto-suave;
+
+        &:hover {
+            background-color: $color-fondo;
+        }
+    }
+
+    &--chico {
+        flex: 0 0 auto;
+        padding: 6px 12px;
+        font-size: 0.85rem;
+    }
+
+    &--no {
+        background-color: $color-superficie;
+        border: 1px solid $color-pospuesta;
+        color: $color-pospuesta;
+
+        &:hover {
+            background-color: $color-pospuesta-fondo;
+        }
+    }
+}

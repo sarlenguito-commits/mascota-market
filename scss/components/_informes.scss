@@ -1,0 +1,123 @@
+@use "../utilities/variables" as *;
+@use "../utilities/mixins" as *;
+@use "../utilities/extend";
+
+.selector {
+    @include flex(row, $align: center, $gap: 8px);
+    font-weight: 700;
+
+    select {
+        padding: 8px 12px;
+        border: 1px solid $color-borde;
+        border-radius: $radio-medio;
+        background-color: $color-superficie;
+    }
+}
+
+.leyenda {
+    @extend %texto-suave;
+    @include flex(row, $align: center, $gap: 6px);
+    flex-wrap: wrap;
+}
+
+.tabla-scroll {
+    @extend %tarjeta;
+    overflow-x: auto;
+}
+
+.informe {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+
+    th,
+    td {
+        padding: 8px;
+        border-bottom: 1px solid $color-borde;
+        text-align: center;
+    }
+
+    thead th {
+        background-color: $color-fondo;
+
+        small {
+            display: block;
+            font-weight: 400;
+            color: $color-texto-suave;
+        }
+    }
+
+    tbody th {
+        min-width: 150px;
+        text-align: left;
+        font-weight: 600;
+    }
+}
+
+.celda {
+    white-space: nowrap;
+
+    &--vacia {
+        color: $color-borde;
+    }
+}
+
+.estado {
+    display: inline-block;
+    margin: 1px;
+    padding: 2px 6px;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 0.75rem;
+
+    &--ok {
+        @include colores($color-ok-fondo, $color-ok);
+    }
+
+    &--curso {
+        @include colores($color-curso-fondo, $color-curso);
+    }
+
+    &--pospuesta {
+        @include colores($color-pospuesta-fondo, $color-pospuesta);
+    }
+
+    &--falta {
+        @include colores($color-atrasada-fondo, $color-atrasada);
+    }
+
+    &--futura {
+        @include colores($color-fondo, $color-texto-suave);
+    }
+}
+
+.historial {
+    @extend %tarjeta;
+    list-style: none;
+
+    li {
+        @include flex(column, $gap: 2px);
+        padding: 10px 14px;
+        border-bottom: 1px solid $color-borde;
+
+        &:last-child {
+            border-bottom: none;
+        }
+    }
+
+    &__cuando,
+    &__meta {
+        @extend %texto-suave;
+        font-size: 0.8rem;
+    }
+
+    &__pospuesta {
+        color: $color-pospuesta;
+        font-size: 0.85rem;
+    }
+
+    &__nota {
+        color: $color-primario-oscuro;
+        font-size: 0.85rem;
+    }
+}
