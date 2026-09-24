@@ -86,6 +86,15 @@ export const TAREAS = [
     { id: "dia-wash", local: "diagonal", nombre: "Limpieza a fondo del Wash", tipo: "lunes", rotacion: ["sharon", "sofia"], desde: "2026-09-21" }
 ];
 
+// ---------- Pedidos a proveedores ----------
+// Qué día se hace el pedido de cada marca y qué día llega (0 = domingo, 1 = lunes … 6 = sábado).
+// Se muestra en la sección Stock y marca lo que se pide o llega hoy.
+export const PEDIDOS = [
+    { marcas: ["Royal Canin", "Eukanuba", "Optimum"], dias: [{ pide: 1, llega: 3 }, { pide: 4, llega: 1 }] },
+    { marcas: ["Balanced", "Nutrique"], dias: [{ pide: 2, llega: 4 }] },
+    { marcas: ["Pro Plan", "Excellent", "Agility", "Sieger"], dias: [{ pide: 3, llega: 5 }] }
+];
+
 // ---------- Stock ----------
 // Productos fijos que aparecen siempre en la sección Stock (las cantidades se cargan desde la app).
 // Para sumar uno: { id: "st-dia-sieger-15", local: "diagonal", nombre: "Sieger adulto 15 kg", unidad: "bolsas", minimo: 2 }

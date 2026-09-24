@@ -2,7 +2,7 @@
 // Interfaz: login, bienvenida, hoy (3 momentos), cambio de turno, calendario por semanas,
 // glosario, locales y, para Agustina, actividad, informes, tareas y bloc de notas.
 // ============================================
-import { PERSONAS, LOCALES, CLAVE_EQUIPO_PRUEBA, MINUTOS_BLOQUEO, STOCK_BASE } from "./config.js";
+import { PERSONAS, LOCALES, CLAVE_EQUIPO_PRUEBA, MINUTOS_BLOQUEO, STOCK_BASE, PEDIDOS } from "./config.js";
 import * as cal from "./calendario.js";
 import * as datos from "./datos.js";
 
@@ -1523,6 +1523,32 @@ function productosStock() {
 
 const pocoStock = (p) => p.minimo !== null && p.minimo !== undefined && p.minimo !== "" && Number(p.cantidad) <= Number(p.minimo);
 
+// Días de pedido y entrega de cada marca (config.js > PEDIDOS), con lo que se pide o llega hoy resaltado.
+function tarjetaPedidos(hoy) {
+    const DIAS = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
+    const d = hoy.getDay();
+    const hoyPide = PEDIDOS.filter((g) => g.dias.some((x) => x.pide === d)).flatMap((g) => g.marcas);
+    const hoyLlega = PEDIDOS.filter((g) => g.dias.some((x) => x.llega === d)).flatMap((g) => g.marcas);
+    return `
+    <section class="pedidos">
+        <h2>🚚 Días de pedido y entrega</h2>
+        ${hoyPide.length ? `<p class="pedidos__hoy pedidos__hoy--pide">📝 <strong>Hoy se pide:</strong> ${esc(hoyPide.join(", "))}</p>` : ""}
+        ${hoyLlega.length ? `<p class="pedidos__hoy pedidos__hoy--llega">📦 <strong>Hoy llega:</strong> ${esc(hoyLlega.join(", "))}</p>` : ""}
+        <ul class="pedidos__lista">
+            ${PEDIDOS.map((g) => `
+            <li class="pedido">
+                <strong class="pedido__marcas">${esc(g.marcas.join(" · "))}</strong>
+                ${g.dias.map((x) => `
+                <span class="pedido__dias">
+                    <span class="${x.pide === d ? "is-hoy" : ""}">Pedido <b>${DIAS[x.pide]}</b></span>
+                    <span aria-hidden="true">→</span>
+                    <span class="${x.llega === d ? "is-hoy" : ""}">entrega <b>${DIAS[x.llega]}</b></span>
+                </span>`).join("")}
+            </li>`).join("")}
+        </ul>
+    </section>`;
+}
+
 function vistaStock() {
     const hoy = cal.ahora();
     if (!estado.filtroStock) {
@@ -1566,6 +1592,7 @@ function vistaStock() {
         <input class="glosario__buscar" type="search" data-buscar-stock data-foco="buscar-stock"
             value="${esc(estado.buscarStock)}" placeholder="🔎 Buscar producto">
     </section>
+    ${tarjetaPedidos(hoy)}
     <div class="filtros">
         ${filtros.map(([id, txt]) => `<button class="filtros__item ${filtro === id ? "is-activo" : ""}" data-filtro-stock="${id}">${txt}</button>`).join("")}
     </div>

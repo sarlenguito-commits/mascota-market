@@ -1,11 +1,11 @@
-.producto, .progreso-local, .evento, .mas__item, .momento__vacio, .ficha, .semana-glosario, .nota, .tabla-scroll, .historial, .tarea, .formulario, .lista-tareas li, .calendario, .detalle-dia, .lista-cal__semana, .login__form, .login__personas, .bienvenida__tarjeta, .modal__caja {
+.pedidos, .producto, .progreso-local, .evento, .mas__item, .momento__vacio, .ficha, .semana-glosario, .nota, .tabla-scroll, .historial, .tarea, .formulario, .lista-tareas li, .calendario, .detalle-dia, .lista-cal__semana, .login__form, .login__personas, .bienvenida__tarjeta, .modal__caja {
   background-color: var(--superficie);
   border: 1px solid var(--borde);
   border-radius: 16px;
   box-shadow: 0 2px 12px var(--sombra);
 }
 
-.producto__info small, .progreso-local__texto span, .evento__cuerpo small, .saludo__donde, .momento__ayuda, .ficha__cabecera p, .semana-glosario__cabecera small, .nota__meta, .leyenda, .historial__cuando, .historial__meta, .bloque__meta, .formulario__ayuda, .lista-tareas li small, .encabezado p, .vacio, .login__marca p {
+.pedido__dias, .producto__info small, .progreso-local__texto span, .evento__cuerpo small, .saludo__donde, .momento__ayuda, .ficha__cabecera p, .semana-glosario__cabecera small, .nota__meta, .leyenda, .historial__cuando, .historial__meta, .bloque__meta, .formulario__ayuda, .lista-tareas li small, .encabezado p, .vacio, .login__marca p {
   color: var(--texto-suave);
   font-size: 0.9rem;
 }
@@ -380,102 +380,102 @@ p {
   animation: flotar 10s ease-in-out infinite;
 }
 .decoracion span:nth-child(1) {
-  top: 8%;
-  left: 86%;
-  font-size: 1.5rem;
-  animation-duration: 12s;
-  animation-delay: -2s;
+  top: 46%;
+  left: 75%;
+  font-size: 2.3rem;
+  animation-duration: 17s;
+  animation-delay: -5s;
 }
 .decoracion span:nth-child(2) {
-  top: 38%;
-  left: 9%;
-  font-size: 1.5rem;
-  animation-duration: 11s;
-  animation-delay: -4s;
+  top: 58%;
+  left: 89%;
+  font-size: 1.8rem;
+  animation-duration: 14s;
+  animation-delay: -8s;
 }
 .decoracion span:nth-child(3) {
-  top: 43%;
-  left: 86%;
-  font-size: 1.8rem;
-  animation-duration: 16s;
-  animation-delay: -7s;
+  top: 66%;
+  left: 16%;
+  font-size: 2.2rem;
+  animation-duration: 12s;
+  animation-delay: -8s;
 }
 .decoracion span:nth-child(4) {
-  top: 47%;
-  left: 3%;
-  font-size: 1.8rem;
-  animation-duration: 10s;
-  animation-delay: -2s;
+  top: 65%;
+  left: 6%;
+  font-size: 1.4rem;
+  animation-duration: 18s;
+  animation-delay: -4s;
 }
 .decoracion span:nth-child(5) {
-  top: 75%;
-  left: 6%;
-  font-size: 1.7rem;
-  animation-duration: 18s;
-  animation-delay: -3s;
+  top: 36%;
+  left: 18%;
+  font-size: 1.3rem;
+  animation-duration: 14s;
+  animation-delay: -2s;
 }
 .decoracion span:nth-child(6) {
-  top: 7%;
-  left: 44%;
-  font-size: 2.2rem;
-  animation-duration: 13s;
-  animation-delay: -2s;
+  top: 49%;
+  left: 35%;
+  font-size: 2rem;
+  animation-duration: 10s;
+  animation-delay: -7s;
 }
 .decoracion span:nth-child(7) {
-  top: 15%;
-  left: 19%;
+  top: 12%;
+  left: 7%;
   font-size: 1.3rem;
-  animation-duration: 9s;
-  animation-delay: -2s;
+  animation-duration: 15s;
+  animation-delay: -8s;
 }
 .decoracion span:nth-child(8) {
-  top: 2%;
-  left: 34%;
-  font-size: 2.2rem;
-  animation-duration: 9s;
+  top: 32%;
+  left: 70%;
+  font-size: 2.8rem;
+  animation-duration: 15s;
   animation-delay: -8s;
 }
 .decoracion span:nth-child(9) {
-  top: 40%;
-  left: 39%;
-  font-size: 2.7rem;
-  animation-duration: 17s;
-  animation-delay: -8s;
+  top: 47%;
+  left: 21%;
+  font-size: 1.5rem;
+  animation-duration: 16s;
+  animation-delay: -4s;
 }
 .decoracion span:nth-child(10) {
-  top: 78%;
-  left: 46%;
-  font-size: 2rem;
+  top: 11%;
+  left: 45%;
+  font-size: 2.2rem;
   animation-duration: 11s;
-  animation-delay: -6s;
+  animation-delay: -8s;
 }
 .decoracion span:nth-child(11) {
-  top: 53%;
-  left: 68%;
-  font-size: 2.4rem;
-  animation-duration: 10s;
-  animation-delay: -6s;
+  top: 77%;
+  left: 33%;
+  font-size: 1.4rem;
+  animation-duration: 17s;
+  animation-delay: -7s;
 }
 .decoracion span:nth-child(12) {
-  top: 9%;
-  left: 39%;
-  font-size: 2.4rem;
-  animation-duration: 11s;
-  animation-delay: -5s;
+  top: 10%;
+  left: 21%;
+  font-size: 2.8rem;
+  animation-duration: 17s;
+  animation-delay: -4s;
 }
 .decoracion span:nth-child(13) {
-  top: 59%;
-  left: 33%;
-  font-size: 1.1rem;
+  top: 45%;
+  left: 70%;
+  font-size: 2rem;
   animation-duration: 15s;
-  animation-delay: -1s;
+  animation-delay: -3s;
 }
 .decoracion span:nth-child(14) {
-  top: 8%;
-  left: 55%;
-  font-size: 2.3rem;
-  animation-duration: 13s;
-  animation-delay: -3s;
+  top: 11%;
+  left: 13%;
+  font-size: 2.6rem;
+  animation-duration: 18s;
+  animation-delay: -1s;
 }
 
 .decoracion .decoracion__paseo {
@@ -2748,6 +2748,61 @@ p {
   padding: 0;
   border: none;
   box-shadow: none;
+}
+
+.pedidos {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding: 14px;
+}
+.pedidos h2 {
+  font-size: 1.05rem;
+}
+.pedidos__hoy {
+  padding: 6px 10px;
+  border-radius: 10px;
+  font-size: 0.9rem;
+}
+.pedidos__hoy--pide {
+  background-color: var(--pospuesta-fondo);
+  color: var(--texto);
+}
+.pedidos__hoy--llega {
+  background-color: var(--ok-fondo);
+  color: var(--texto);
+}
+.pedidos__lista {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  list-style: none;
+}
+
+.pedido {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: 8px;
+  border-top: 1px solid var(--borde);
+}
+.pedido__marcas {
+  font-size: 0.92rem;
+}
+.pedido__dias {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  font-size: 0.85rem;
+}
+.pedido__dias .is-hoy {
+  padding: 0 6px;
+  border-radius: 999px;
+  background-color: var(--primario);
+  color: #FFFFFF;
 }
 
 /*# sourceMappingURL=style.css.map */
