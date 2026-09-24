@@ -96,4 +96,4 @@ export const PEDIDOS = [
 ];
 
 // Formas de pago para los pedidos de clientes (es opcional: se puede dejar "Todavía no se sabe").
-export const FORMAS_PAGO = ["Efectivo", "Transferencia", "Mercado Pago", "Débito", "Crédito"];
+export const FORMAS_PAGO = ["Efectivo", "Transferencia Mercado Pago", "QR Mercado Pago", "Débito", "Crédito"];

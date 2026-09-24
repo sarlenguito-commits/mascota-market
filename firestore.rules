@@ -76,7 +76,10 @@ service cloud.firestore {
       allow read, delete: if esDelEquipo();
       allow create, update: if esDelEquipo()
         && request.resource.data.local in ['diagonal', 'rivadavia']
-        && request.resource.data.estado in ['pendiente', 'llego', 'entregado']
+        && request.resource.data.estado in ['pendiente', 'llego', 'entregado', 'cancelado']
+        && request.resource.data.pagoEstado in ['nada', 'sena', 'total']
+        && request.resource.data.sena is number
+        && request.resource.data.sena >= 0 && request.resource.data.sena <= 100000000
         && request.resource.data.cliente is string
         && request.resource.data.cliente.size() > 0 && request.resource.data.cliente.size() <= 80
         && request.resource.data.telefono is string && request.resource.data.telefono.size() <= 30

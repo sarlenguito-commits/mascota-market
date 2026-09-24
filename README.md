@@ -13,7 +13,8 @@ Además:
 - **📖 Glosario**: todas las tareas de los dos locales con quién hace cada una según la semana, el total y un buscador.
 - **🚚 Pedidos**:
   - **Proveedores:** arriba, en grande, lo que **se pide hoy** y lo que **llega hoy**. Sale de los días fijos de cada marca (`PEDIDOS` en `config.js`), y Agustina puede cambiar lo de cualquier día, con una nota.
-  - **Pedidos de clientes:** cuando una clienta pide algo que no hay, se anota el producto, la cantidad, el local, el nombre, el teléfono, la forma de pago (si se sabe) y una nota. Cada pedido pasa por ⏳ pendiente → 📦 llegó (avisar al cliente, con botón para llamar) → ✅ entregado. Tiene buscador y filtro por local, y se puede editar o borrar. Los entregados del último mes quedan en una lista plegada.
+  - **Pedidos de clientes:** cuando una clienta pide algo que no hay, se anota el producto, la cantidad, el local, el nombre, el teléfono, **si pagó** (nada, seña con su monto, o el total), la forma de pago (si se sabe) y una nota. Cada pedido pasa por ⏳ pendiente → 📦 llegó (avisar al cliente, con botón para llamar) → ✅ entregado, o ❌ cancelado. Al entregarlo o cancelarlo desaparece de la lista. Tiene buscador y filtro por local, y se puede editar o borrar.
+  - **📚 Pedidos entregados** (solo Agustina, en Más): el historial de los entregados y los cancelados, por mes, con buscador para ver todo lo que pidió un cliente. Desde ahí se puede deshacer una entrega o volver un cancelado a pendiente.
   - En **"Hoy"** de las chicas, **abajo de las tareas**, aparece "🚚 Pedidos de hoy" con lo de los proveedores y los pedidos de clientes que ya llegaron en su local.
 
 > Esta app es para organizar el trabajo entre turnos de forma simple y efectiva.

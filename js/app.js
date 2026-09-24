@@ -35,7 +35,9 @@ const estado = {
     formPedidos: null,        // { fecha, pide, llega, nota } mientras Agustina cambia un día
     filtroPedidos: null,
     buscarPedidos: "",
-    formPedido: { cliente: "", telefono: "", producto: "", cantidad: "1", pago: "", nota: "", local: "" },
+    formPedido: { cliente: "", telefono: "", producto: "", cantidad: "1", pago: "", pagoEstado: "nada", sena: "", nota: "", local: "" },
+    filtroHistorial: "entregado", // historial de pedidos (Agustina): entregado | cancelado
+    buscarHistorial: "",
     pedidoEditando: null,
     edicionPedido: {},
     escuchando: false
@@ -250,7 +252,7 @@ function alternarTema() {
 // [vista, ícono (Tabler), texto]
 const NAV_EMPLEADA = [["hoy", "sun", "Hoy"], ["turno", "arrows-exchange", "Turno"], ["calendario", "calendar", "Calendario"], ["glosario", "book", "Glosario"], ["locales", "building-store", "Locales"], ["pedidos", "truck", "Pedidos"]];
 const NAV_DUENA = [["actividad", "activity", "Actividad"], ["tareas", "clipboard-plus", "Tareas"], ["calendario", "calendar", "Calendario"], ["notas", "notes", "Notas"], ["mas", "dots", "Más"]];
-const MAS_DUENA = [["informes", "chart-bar", "Informes"], ["turno", "arrows-exchange", "Cambio de turno"], ["locales", "building-store", "Locales"], ["glosario", "book", "Glosario"], ["pedidos", "truck", "Pedidos"]];
+const MAS_DUENA = [["informes", "chart-bar", "Informes"], ["turno", "arrows-exchange", "Cambio de turno"], ["locales", "building-store", "Locales"], ["glosario", "book", "Glosario"], ["pedidos", "truck", "Pedidos"], ["historialPedidos", "archive", "Pedidos entregados"]];
 // El menú "Más" es solo de Agustina (las chicas tienen todo en la barra).
 const menuMas = () => (esDuena() ? MAS_DUENA : []);
 
@@ -272,7 +274,7 @@ function render() {
     const vistas = {
         hoy: vistaHoy, turno: vistaTurno, calendario: vistaCalendario, locales: vistaLocales,
         informes: vistaInformes, tareas: vistaTareas, notas: vistaNotas, glosario: vistaGlosario,
-        actividad: vistaActividad, mas: vistaMas, pedidos: vistaPedidos
+        actividad: vistaActividad, mas: vistaMas, pedidos: vistaPedidos, historialPedidos: vistaHistorialPedidos
     };
     const contenido = (vistas[estado.vista] || vistaHoy)();
 
@@ -381,6 +383,10 @@ function conectarEventos() {
     on("[data-pedido-estado]", "click", (el) => cambiarEstadoPedido(el.dataset.pedidoEstado, el.dataset.valor));
     on("[data-filtro-pedidos]", "click", (el) => { estado.filtroPedidos = el.dataset.filtroPedidos; render(); });
     on("[data-buscar-pedidos]", "input", (el) => { estado.buscarPedidos = el.value; render(); });
+    // "¿Pagó algo?" muestra u oculta el monto de la seña
+    on("[data-pedido-campo=pagoEstado], [data-edicion-pedido-campo=pagoEstado]", "change", () => render());
+    on("[data-filtro-historial]", "click", (el) => { estado.filtroHistorial = el.dataset.filtroHistorial; render(); });
+    on("[data-buscar-historial]", "input", (el) => { estado.buscarHistorial = el.value; render(); });
 
     // Pedidos del día (Agustina)
     on("[data-pedidos-editar]", "click", (el) => abrirFormPedidos(el.dataset.pedidosEditar));
@@ -1101,8 +1107,9 @@ async function marcarAgenda(id, boton) {
 function formTareaPuntual({ conFecha = true, compacto = false } = {}) {
     const f = estado.formAgenda;
     if (!f.fecha) f.fecha = cal.iso(cal.proximoDiaHabil(cal.ahora()));
-    const personas = personasDe(f.local);
-    if (f.para !== "todas" && !personas.includes(f.para)) f.para = "todas";
+    // Primero las que trabajan en ese local y después las demás (Agustina puede asignarle algo a cualquiera).
+    const delLocal = personasDe(f.local);
+    const personas = [...delLocal, ...Object.keys(PERSONAS).filter((id) => PERSONAS[id].rol === "empleada" && !delLocal.includes(id))];
     return `
     <form class="formulario ${compacto ? "formulario--compacto" : ""}" id="form-agenda">
         ${compacto ? "" : "<h2>➕ Nueva tarea</h2>"}
@@ -1119,7 +1126,7 @@ function formTareaPuntual({ conFecha = true, compacto = false } = {}) {
             <label>¿Para quién?
                 <select data-agenda-campo="para">
                     <option value="todas" ${f.para === "todas" ? "selected" : ""}>Todas las del local</option>
-                    ${personas.map((id) => `<option value="${id}" ${f.para === id ? "selected" : ""}>${esc(nombre(id))}</option>`).join("")}
+                    ${personas.map((id) => `<option value="${id}" ${f.para === id ? "selected" : ""}>${esc(nombre(id))}${delLocal.includes(id) ? "" : " (otro local)"}</option>`).join("")}
                 </select>
             </label>
         </div>
@@ -1649,10 +1656,13 @@ function tarjetaPedidos(hoy) {
 const ESTADOS_PEDIDO = {
     pendiente: { titulo: "⏳ Pendientes", texto: "Pendiente" },
     llego: { titulo: "📦 Llegaron · avisar al cliente", texto: "Llegó" },
-    entregado: { titulo: "✅ Entregados", texto: "Entregado" }
+    entregado: { titulo: "✅ Entregados", texto: "Entregado" },
+    cancelado: { titulo: "❌ Cancelados", texto: "Cancelado" }
 };
+const PAGO_ESTADOS = [["nada", "Todavía no pagó"], ["sena", "Dejó seña"], ["total", "Pagó el total"]];
+const pesos = (n) => `$ ${Number(n || 0).toLocaleString("es-AR")}`;
 
-const formPedidoVacio = (local = "") => ({ cliente: "", telefono: "", producto: "", cantidad: "1", pago: "", nota: "", local });
+const formPedidoVacio = (local = "") => ({ cliente: "", telefono: "", producto: "", cantidad: "1", pago: "", pagoEstado: "nada", sena: "", nota: "", local });
 const buscarPedido = (id) => estado.pedidosClientes.find((x) => x.id === id);
 
 // Campos del formulario (sirve para cargar uno nuevo y para editar). "prefijo" separa los dos formularios.
@@ -1679,6 +1689,17 @@ function camposPedido(f, prefijo) {
         <label>Teléfono
             <input ${campo}="telefono" data-foco="${prefijo}-telefono" type="tel" inputmode="tel" maxlength="30" value="${esc(f.telefono)}" placeholder="Ej: 11 5555-1234">
         </label>
+        <div class="formulario__fila">
+            <label>¿Pagó algo?
+                <select ${campo}="pagoEstado">
+                    ${PAGO_ESTADOS.map(([v, t]) => `<option value="${v}" ${(f.pagoEstado || "nada") === v ? "selected" : ""}>${t}</option>`).join("")}
+                </select>
+            </label>
+            ${f.pagoEstado === "sena" ? `
+            <label>Monto de la seña
+                <input ${campo}="sena" data-foco="${prefijo}-sena" inputmode="numeric" maxlength="12" value="${esc(f.sena)}" placeholder="Ej: 5.000">
+            </label>` : ""}
+        </div>
         <label>Forma de pago
             <select ${campo}="pago">
                 <option value="" ${!f.pago ? "selected" : ""}>Todavía no se sabe</option>
@@ -1706,12 +1727,18 @@ function tarjetaPedidoCliente(x) {
         </li>`;
     }
     const tel = (x.telefono || "").replace(/[^\d+]/g, "");
+    const cancelar = `<button class="boton boton--chico boton--suave" data-pedido-estado="${x.id}" data-valor="cancelado">❌ Cancelar</button>`;
     const botones = {
-        pendiente: `<button class="boton boton--chico" data-pedido-estado="${x.id}" data-valor="llego">📦 Ya llegó</button>`,
-        llego: `${tel ? `<a class="boton boton--chico boton--suave" href="tel:${tel}">📞 Llamar</a>` : ""}
+        pendiente: `${cancelar}<button class="boton boton--chico" data-pedido-estado="${x.id}" data-valor="llego">📦 Ya llegó</button>`,
+        llego: `${cancelar}${tel ? `<a class="boton boton--chico boton--suave" href="tel:${tel}">📞 Llamar</a>` : ""}
             <button class="boton boton--chico" data-pedido-estado="${x.id}" data-valor="entregado">✅ Entregado</button>`,
-        entregado: `<button class="boton boton--chico boton--suave" data-pedido-estado="${x.id}" data-valor="llego">↩️ Deshacer</button>`
+        entregado: `<button class="boton boton--chico boton--suave" data-pedido-estado="${x.id}" data-valor="llego">↩️ Deshacer entrega</button>`,
+        cancelado: `<button class="boton boton--chico boton--suave" data-pedido-estado="${x.id}" data-valor="pendiente">↩️ Volver a pendiente</button>`
     }[x.estado] || "";
+    const pagoTexto = { total: "Pagó el total", sena: `Dejó seña${x.sena ? ` de ${pesos(x.sena)}` : ""}`, nada: "Todavía no pagó" }[x.pagoEstado || "nada"];
+    const quien = esc(nombre(x.quien || x.persona));
+    const cierre = x.estado === "entregado" ? ` · entregó ${quien}, ${diaCorto(x.entregadoEn || x.actualizado)} ${hora(x.entregadoEn || x.actualizado)}`
+        : x.estado === "cancelado" ? ` · canceló ${quien}, ${diaCorto(x.canceladoEn || x.actualizado)}` : "";
     return `
     <li class="pedido-cliente pedido-cliente--${x.estado}">
         <div class="pedido-cliente__cabeza">
@@ -1719,9 +1746,9 @@ function tarjetaPedidoCliente(x) {
             <span class="chip chip--${x.local}">${esc(LOCALES[x.local]?.nombre || x.local)}</span>
         </div>
         <p class="pedido-cliente__dato">👤 ${esc(x.cliente)}${x.telefono ? ` · 📞 <a href="tel:${tel}">${esc(x.telefono)}</a>` : ""}</p>
-        <p class="pedido-cliente__dato">💳 ${x.pago ? esc(x.pago) : "Forma de pago: todavía no se sabe"}</p>
+        <p class="pedido-cliente__dato">💰 ${pagoTexto}${x.pago ? ` · ${esc(x.pago)}` : ""}</p>
         ${x.nota ? `<p class="pedido-cliente__nota">🗒️ ${esc(x.nota)}</p>` : ""}
-        <small class="pedido-cliente__meta">${esc(ESTADOS_PEDIDO[x.estado]?.texto || "")} · anotó ${esc(nombre(x.persona))}, ${diaCorto(x.creado)} ${hora(x.creado)}${x.actualizado && x.actualizado !== x.creado ? ` · último cambio ${esc(nombre(x.quien || x.persona))}, ${diaCorto(x.actualizado)}` : ""}</small>
+        <small class="pedido-cliente__meta">Anotó ${esc(nombre(x.persona))}, ${diaCorto(x.creado)} ${hora(x.creado)}${cierre}</small>
         <div class="pedido-cliente__acciones">
             ${botones}
             <button class="producto__editar" data-pedido-editar="${x.id}" aria-label="Editar pedido de ${esc(x.cliente)}">✏️</button>
@@ -1737,7 +1764,6 @@ function vistaPedidos() {
     const filtro = estado.filtroPedidos;
     const normalizar = (t) => String(t || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
     const buscar = normalizar(estado.buscarPedidos.trim());
-    const hace30 = cal.iso(cal.sumarDias(hoy, -30));
     const visibles = estado.pedidosClientes
         .filter((x) => filtro === "todos" || x.local === filtro)
         .filter((x) => !buscar || [x.cliente, x.producto, x.telefono].some((t) => normalizar(t).includes(buscar)))
@@ -1745,8 +1771,6 @@ function vistaPedidos() {
     const de = (est) => visibles.filter((x) => x.estado === est);
     const pendientes = de("pendiente");
     const llegaron = de("llego");
-    // Entregados: solo los del último mes, para que la lista no crezca para siempre.
-    const entregados = de("entregado").filter((x) => (x.actualizado || x.creado || "") >= hace30);
     const f = estado.formPedido;
     if (!f.local) f.local = filtro !== "todos" ? filtro : "diagonal";
     const filtros = [["todos", "Todos"], ...Object.entries(LOCALES).map(([id, l]) => [id, l.nombre])];
@@ -1773,11 +1797,7 @@ function vistaPedidos() {
     ${llegaron.length ? `<h3 class="bloque__titulo">${ESTADOS_PEDIDO.llego.titulo}</h3>${lista(llegaron)}` : ""}
     <h3 class="bloque__titulo">${ESTADOS_PEDIDO.pendiente.titulo}</h3>
     ${pendientes.length ? lista(pendientes) : `<p class="vacio">${buscar ? "No hay pedidos con esa búsqueda." : "No hay pedidos pendientes. Cuando una clienta pida algo, anotalo abajo."}</p>`}
-    ${entregados.length ? `
-    <details class="pedidos-clientes__entregados">
-        <summary>${ESTADOS_PEDIDO.entregado.titulo} (último mes: ${entregados.length})</summary>
-        ${lista(entregados)}
-    </details>` : ""}
+    ${esDuena() ? `<button class="boton boton--suave boton--grande" data-vista="historialPedidos">📚 Ver pedidos entregados y cancelados</button>` : ""}
     <form class="formulario" id="form-pedido">
         <h2>➕ Nuevo pedido de cliente</h2>
         ${camposPedido(f, "pedido")}
@@ -1790,7 +1810,9 @@ function leerFormPedido(f) {
     const cantidad = Math.round(Number(f.cantidad));
     const datosPedido = {
         cliente: f.cliente.trim(), telefono: f.telefono.trim(), producto: f.producto.trim(),
-        cantidad, pago: f.pago || "", nota: f.nota.trim(), local: f.local
+        cantidad, pago: f.pago || "", nota: f.nota.trim(), local: f.local,
+        pagoEstado: f.pagoEstado || "nada",
+        sena: f.pagoEstado === "sena" ? Number(String(f.sena).replace(/\D/g, "")) || 0 : 0
     };
     if (!datosPedido.producto) return aviso("Escribí el producto"), null;
     if (!datosPedido.cliente) return aviso("Escribí el nombre del cliente"), null;
@@ -1814,14 +1836,14 @@ function editarPedido(id) {
     const x = buscarPedido(id);
     if (!x) return;
     estado.pedidoEditando = id;
-    estado.edicionPedido = { ...formPedidoVacio(x.local), ...x, cantidad: String(x.cantidad ?? 1) };
+    estado.edicionPedido = { ...formPedidoVacio(x.local), ...x, cantidad: String(x.cantidad ?? 1), pagoEstado: x.pagoEstado || "nada", sena: x.sena ? String(x.sena) : "" };
     render();
 }
 
 // Guarda el pedido completo con los cambios (el documento se reemplaza entero).
 async function guardarPedido(x, cambios) {
     const { uid, ...resto } = x;
-    await datos.guardarEn("pedidosClientes", { ...resto, ...cambios, quien: estado.persona, actualizado: cal.ahora().toISOString() });
+    await datos.guardarEn("pedidosClientes", { pagoEstado: "nada", sena: 0, ...resto, ...cambios, quien: estado.persona, actualizado: cal.ahora().toISOString() });
 }
 
 async function guardarEdicionPedido() {
@@ -1837,8 +1859,57 @@ async function guardarEdicionPedido() {
 async function cambiarEstadoPedido(id, nuevoEstado) {
     const x = buscarPedido(id);
     if (!x) return;
-    await guardarPedido(x, { estado: nuevoEstado });
-    aviso({ llego: "📦 Marcado como llegado: avisale al cliente", entregado: "✅ Pedido entregado" }[nuevoEstado] || "Listo");
+    if (nuevoEstado === "cancelado" && !confirm(`¿Cancelar el pedido de ${x.cliente} (${x.producto})?`)) return;
+    const ahora = cal.ahora().toISOString();
+    const cambios = { estado: nuevoEstado };
+    if (nuevoEstado === "entregado") cambios.entregadoEn = ahora;
+    if (nuevoEstado === "cancelado") cambios.canceladoEn = ahora;
+    await guardarPedido(x, cambios);
+    aviso({
+        llego: "📦 Marcado como llegado: avisale al cliente", entregado: "✅ Pedido entregado",
+        cancelado: "❌ Pedido cancelado", pendiente: "Volvió a pendientes"
+    }[nuevoEstado] || "Listo");
+}
+
+// ---------- Vista: Pedidos entregados (Agustina) ----------
+// Historial de los pedidos de clientes ya entregados o cancelados, por mes, con buscador por cliente.
+
+function vistaHistorialPedidos() {
+    const filtro = estado.filtroHistorial;
+    const normalizar = (t) => String(t || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+    const buscar = normalizar(estado.buscarHistorial.trim());
+    const cuando = (x) => (x.estado === "entregado" ? x.entregadoEn : x.canceladoEn) || x.actualizado || x.creado || "";
+    const cerrados = estado.pedidosClientes.filter((x) => x.estado === "entregado" || x.estado === "cancelado");
+    const cuenta = (est) => cerrados.filter((x) => x.estado === est).length;
+    const lista = cerrados
+        .filter((x) => x.estado === filtro)
+        .filter((x) => !buscar || [x.cliente, x.producto, x.telefono].some((t) => normalizar(t).includes(buscar)))
+        .sort((a, b) => cuando(b).localeCompare(cuando(a)));
+    // Agrupados por mes
+    const meses = [];
+    for (const x of lista) {
+        const d = new Date(cuando(x));
+        const clave = `${cal.nombreMes(d.getMonth())} ${d.getFullYear()}`;
+        if (meses.at(-1)?.clave !== clave) meses.push({ clave, items: [] });
+        meses.at(-1).items.push(x);
+    }
+    const filtros = [["entregado", `✅ Entregados (${cuenta("entregado")})`], ["cancelado", `❌ Cancelados (${cuenta("cancelado")})`]];
+    return `
+    <section class="encabezado">
+        <h1>📚 Pedidos entregados</h1>
+        <p>Los pedidos de clientes que ya se entregaron o se cancelaron. Buscá un cliente para ver todo lo que pidió.</p>
+        <input class="glosario__buscar" type="search" data-buscar-historial data-foco="buscar-historial"
+            value="${esc(estado.buscarHistorial)}" placeholder="🔎 Buscar cliente, producto o teléfono">
+    </section>
+    <div class="filtros">
+        ${filtros.map(([id, txt]) => `<button class="filtros__item ${filtro === id ? "is-activo" : ""}" data-filtro-historial="${id}">${txt}</button>`).join("")}
+    </div>
+    ${buscar && lista.length ? `<p class="formulario__ayuda">${lista.length} pedido${lista.length === 1 ? "" : "s"} con "${esc(estado.buscarHistorial.trim())}"</p>` : ""}
+    ${meses.length ? meses.map((m) => `
+    <h3 class="bloque__titulo">${m.clave.charAt(0).toUpperCase() + m.clave.slice(1)} · ${m.items.length}</h3>
+    <ul class="pedidos-clientes">${m.items.map(tarjetaPedidoCliente).join("")}</ul>`).join("")
+        : `<p class="vacio">${buscar ? "No hay pedidos con esa búsqueda." : filtro === "entregado" ? "Todavía no se entregó ningún pedido." : "No hay pedidos cancelados."}</p>`}
+    <button class="boton boton--suave" data-vista="pedidos">🚚 Volver a Pedidos</button>`;
 }
 
 async function borrarPedido(id) {
