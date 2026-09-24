@@ -250,9 +250,10 @@ export async function borrarTareaExtra(id) {
 // "agenda"      → cosas que Agustina agrega al calendario de cada una
 // "notasDuena"  → bloc de notas privado de Agustina
 // "stock"       → productos y cantidades (todas pueden modificar)
+// "pedidosDia"  → lo que Agustina cambió de los pedidos de un día (id = fecha); si no hay, vale el calendario fijo
 // Mismo manejo en los dos modos: en prueba se guardan en localStorage (mm-demo-<coleccion>).
 
-export const COLECCIONES = ["notasTurno", "agenda", "notasDuena", "stock"];
+export const COLECCIONES = ["notasTurno", "agenda", "notasDuena", "stock", "pedidosDia"];
 const claveDemo = (col) => `mm-demo-${col}`;
 const leerColDemo = (col) => {
     try { return JSON.parse(localStorage.getItem(claveDemo(col))) || {}; } catch { return {}; }

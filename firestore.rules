@@ -82,6 +82,16 @@ service cloud.firestore {
         && request.resource.data.cantidad >= 0;
     }
 
+    // Pedidos de un día puntual (id = fecha): todas los ven, solo Agustina los cambia.
+    match /pedidosDia/{fecha} {
+      allow read: if esDelEquipo();
+      allow delete: if esAgustina();
+      allow create, update: if esAgustina()
+        && request.resource.data.pide is string && request.resource.data.pide.size() <= 300
+        && request.resource.data.llega is string && request.resource.data.llega.size() <= 300
+        && request.resource.data.nota is string && request.resource.data.nota.size() <= 300;
+    }
+
     // Bloc de notas de Agustina: privado, nadie más lo puede leer.
     match /notasDuena/{id} {
       allow read, write: if esAgustina();

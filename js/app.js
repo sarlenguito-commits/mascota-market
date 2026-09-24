@@ -31,6 +31,8 @@ const estado = {
     animar: true,             // animación de entrada: solo al cambiar de pantalla
     recien: null,             // tarea recién marcada (animación del tilde)
     stock: [],                // productos guardados (cantidades y agregados desde la app)
+    pedidosDia: [],           // cambios de Agustina a los pedidos de un día
+    formPedidos: null,        // { fecha, pide, llega, nota } mientras Agustina cambia un día
     filtroStock: null,
     buscarStock: "",
     formStock: { nombre: "", local: "", cantidad: "", minimo: "", unidad: "unidades" },
@@ -77,6 +79,7 @@ const iniciar = () => datos.escucharSesion((persona) => {
         datos.escucharColeccion("notasTurno", (lista) => { estado.notasTurno = lista; render(); });
         datos.escucharColeccion("agenda", (lista) => { estado.agenda = lista; render(); });
         datos.escucharColeccion("stock", (lista) => { estado.stock = lista; render(); });
+        datos.escucharColeccion("pedidosDia", (lista) => { estado.pedidosDia = lista; render(); });
         // El bloc de notas es privado: solo Agustina lo lee.
         if (PERSONAS[persona]?.rol === "duena") {
             datos.escucharColeccion("notasDuena", (lista) => { estado.notasDuena = lista; render(); });
@@ -245,9 +248,9 @@ function alternarTema() {
 // ---------- Navegación (barra de abajo en el celular) ----------
 
 // [vista, ícono (Tabler), texto]
-const NAV_EMPLEADA = [["hoy", "sun", "Hoy"], ["turno", "arrows-exchange", "Turno"], ["calendario", "calendar", "Calendario"], ["glosario", "book", "Glosario"], ["locales", "building-store", "Locales"], ["stock", "package", "Stock"]];
+const NAV_EMPLEADA = [["hoy", "sun", "Hoy"], ["turno", "arrows-exchange", "Turno"], ["calendario", "calendar", "Calendario"], ["glosario", "book", "Glosario"], ["locales", "building-store", "Locales"], ["stock", "package", "Pedidos/<wbr>Stock"]];
 const NAV_DUENA = [["actividad", "activity", "Actividad"], ["tareas", "clipboard-plus", "Tareas"], ["calendario", "calendar", "Calendario"], ["notas", "notes", "Notas"], ["mas", "dots", "Más"]];
-const MAS_DUENA = [["informes", "chart-bar", "Informes"], ["turno", "arrows-exchange", "Cambio de turno"], ["locales", "building-store", "Locales"], ["glosario", "book", "Glosario"], ["stock", "package", "Stock"]];
+const MAS_DUENA = [["informes", "chart-bar", "Informes"], ["turno", "arrows-exchange", "Cambio de turno"], ["locales", "building-store", "Locales"], ["glosario", "book", "Glosario"], ["stock", "package", "Pedidos / Stock"]];
 // El menú "Más" es solo de Agustina (las chicas tienen todo en la barra).
 const menuMas = () => (esDuena() ? MAS_DUENA : []);
 
@@ -376,6 +379,14 @@ function conectarEventos() {
     on("#form-editar-stock", "submit", (el, e) => { e.preventDefault(); guardarEdicionStock(); });
     on("[data-filtro-stock]", "click", (el) => { estado.filtroStock = el.dataset.filtroStock; render(); });
     on("[data-buscar-stock]", "input", (el) => { estado.buscarStock = el.value; render(); });
+
+    // Pedidos del día (Agustina)
+    on("[data-pedidos-editar]", "click", (el) => abrirFormPedidos(el.dataset.pedidosEditar));
+    on("[data-pedidos-fecha]", "change", (el) => el.value && abrirFormPedidos(el.value));
+    on("[data-pedidos-campo]", "input", (el) => { estado.formPedidos[el.dataset.pedidosCampo] = el.value; });
+    on("[data-pedidos-cancelar]", "click", () => { estado.formPedidos = null; render(); });
+    on("[data-pedidos-restaurar]", "click", () => restaurarPedidos());
+    on("#form-pedidos", "submit", (el, e) => { e.preventDefault(); guardarPedidos(); });
 
     // Glosario: buscador
     on("[data-buscar-glosario]", "input", (el) => { estado.buscarGlosario = el.value; render(); });
@@ -648,6 +659,7 @@ function vistaHoy() {
 
     return `
     ${cabeceraHoy(hechas.length, mias.length)}
+    ${avisoPedidosHoy(hoy)}
     ${agendaHoy.length ? `
     <section class="momento">
         <h2 class="momento__titulo">📌 Tareas de Agustina</h2>
@@ -1508,7 +1520,7 @@ function vistaMas() {
 }
 
 
-// ---------- Vista: Stock (todas pueden cargar y modificar) ----------
+// ---------- Vista: Pedidos / Stock (todas pueden cargar y modificar el stock) ----------
 // Productos = los fijos de config.js (STOCK_BASE) + los agregados desde la app.
 // Las cantidades y los cambios se guardan en la colección "stock" con el mismo id.
 
@@ -1523,26 +1535,115 @@ function productosStock() {
 
 const pocoStock = (p) => p.minimo !== null && p.minimo !== undefined && p.minimo !== "" && Number(p.cantidad) <= Number(p.minimo);
 
-// Días de pedido y entrega de cada marca (config.js > PEDIDOS), con lo que se pide o llega hoy resaltado.
+// ---------- Pedidos a proveedores ----------
+// Lo fijo sale de config.js > PEDIDOS; Agustina puede cambiar lo de un día puntual (colección "pedidosDia", id = fecha).
+
+const DIAS_SEMANA = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
+
+/** Lo que se pide y lo que llega en una fecha: { pide, llega, nota, cambiado, persona } */
+function pedidosDelDia(fecha) {
+    const d = fecha.getDay();
+    const cambio = estado.pedidosDia.find((x) => x.id === cal.iso(fecha));
+    if (cambio) return { pide: cambio.pide || "", llega: cambio.llega || "", nota: cambio.nota || "", cambiado: true, persona: cambio.persona };
+    const marcas = (clave) => PEDIDOS.filter((g) => g.dias.some((x) => x[clave] === d)).flatMap((g) => g.marcas).join(", ");
+    return { pide: marcas("pide"), llega: marcas("llega"), nota: "", cambiado: false };
+}
+
+// Los dos carteles grandes: lo que se pide y lo que llega hoy.
+function carteles(dia) {
+    return `
+    ${dia.pide ? `<p class="pedidos__hoy pedidos__hoy--pide"><span>📝 Hoy se pide</span><strong>${esc(dia.pide)}</strong></p>` : ""}
+    ${dia.llega ? `<p class="pedidos__hoy pedidos__hoy--llega"><span>📦 Hoy llega</span><strong>${esc(dia.llega)}</strong></p>` : ""}
+    ${dia.nota ? `<p class="pedidos__nota">🗒️ ${esc(dia.nota)}</p>` : ""}`;
+}
+
+// Aviso en "Hoy" de las chicas.
+function avisoPedidosHoy(hoy) {
+    const dia = pedidosDelDia(hoy);
+    if (!dia.pide && !dia.llega && !dia.nota) return "";
+    return `
+    <section class="momento pedidos pedidos--aviso">
+        <h2 class="momento__titulo">🚚 Pedidos de hoy</h2>
+        ${carteles(dia)}
+        <button class="boton boton--suave" data-vista="stock">Ver pedidos y stock</button>
+    </section>`;
+}
+
+// Formulario de Agustina para cambiar lo de un día.
+function formPedidos() {
+    const f = estado.formPedidos;
+    const fecha = cal.desdeIso(f.fecha);
+    const fijo = !estado.pedidosDia.some((x) => x.id === f.fecha);
+    return `
+    <form class="formulario formulario--compacto" id="form-pedidos">
+        <h3>✏️ Cambiar pedidos del día</h3>
+        <label>Día
+            <input type="date" data-pedidos-fecha value="${f.fecha}" required>
+        </label>
+        <p class="formulario__ayuda">${cal.nombreDia(fecha)} ${fecha.getDate()}/${fecha.getMonth() + 1}${fijo ? " · ahora muestra lo de siempre" : " · ya lo cambiaste"}</p>
+        <label>Se pide
+            <textarea data-pedidos-campo="pide" data-foco="pedidos-pide" rows="2" maxlength="300" placeholder="Ej: Royal Canin, Eukanuba">${esc(f.pide)}</textarea>
+        </label>
+        <label>Llega
+            <textarea data-pedidos-campo="llega" data-foco="pedidos-llega" rows="2" maxlength="300" placeholder="Ej: Balanced, Nutrique">${esc(f.llega)}</textarea>
+        </label>
+        <label>Nota (opcional)
+            <textarea data-pedidos-campo="nota" data-foco="pedidos-nota" rows="2" maxlength="300" placeholder="Ej: Royal Canin llega a la tarde">${esc(f.nota)}</textarea>
+        </label>
+        <div class="tarea__botones">
+            <button class="boton" type="submit">Guardar</button>
+            <button class="boton boton--suave" type="button" data-pedidos-cancelar>Cancelar</button>
+        </div>
+        ${fijo ? "" : `<button class="nota__borrar" type="button" data-pedidos-restaurar>Volver a lo de siempre</button>`}
+    </form>`;
+}
+
+function abrirFormPedidos(fechaIso) {
+    const dia = pedidosDelDia(cal.desdeIso(fechaIso));
+    estado.formPedidos = { fecha: fechaIso, pide: dia.pide, llega: dia.llega, nota: dia.nota };
+    render();
+}
+
+async function guardarPedidos() {
+    const f = estado.formPedidos;
+    await datos.guardarEn("pedidosDia", {
+        id: f.fecha, pide: f.pide.trim(), llega: f.llega.trim(), nota: f.nota.trim(),
+        persona: estado.persona, actualizado: cal.ahora().toISOString()
+    });
+    estado.formPedidos = null;
+    aviso("Pedidos del día guardados ✓");
+    render();
+}
+
+async function restaurarPedidos() {
+    if (!confirm("¿Volver a lo de siempre para ese día?")) return;
+    await datos.borrarDe("pedidosDia", estado.formPedidos.fecha);
+    estado.formPedidos = null;
+    aviso("Listo, vuelve a lo de siempre");
+    render();
+}
+
+// Tarjeta de la sección Pedidos / Stock: lo de hoy en grande, el calendario fijo abajo.
 function tarjetaPedidos(hoy) {
-    const DIAS = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
     const d = hoy.getDay();
-    const hoyPide = PEDIDOS.filter((g) => g.dias.some((x) => x.pide === d)).flatMap((g) => g.marcas);
-    const hoyLlega = PEDIDOS.filter((g) => g.dias.some((x) => x.llega === d)).flatMap((g) => g.marcas);
+    const dia = pedidosDelDia(hoy);
     return `
     <section class="pedidos">
-        <h2>🚚 Días de pedido y entrega</h2>
-        ${hoyPide.length ? `<p class="pedidos__hoy pedidos__hoy--pide">📝 <strong>Hoy se pide:</strong> ${esc(hoyPide.join(", "))}</p>` : ""}
-        ${hoyLlega.length ? `<p class="pedidos__hoy pedidos__hoy--llega">📦 <strong>Hoy llega:</strong> ${esc(hoyLlega.join(", "))}</p>` : ""}
+        <h2>🚚 Pedidos de hoy</h2>
+        ${dia.pide || dia.llega || dia.nota ? carteles(dia) : `<p class="vacio">Hoy no se pide ni llega nada.</p>`}
+        ${dia.cambiado ? `<p class="formulario__ayuda">✏️ Cambiado por ${esc(nombre(dia.persona))}</p>` : ""}
+        ${esDuena() ? (estado.formPedidos ? formPedidos()
+            : `<button class="boton boton--suave" data-pedidos-editar="${cal.iso(hoy)}">✏️ Cambiar lo de hoy u otro día</button>`) : ""}
+        <h3 class="pedidos__subtitulo">Días de siempre</h3>
         <ul class="pedidos__lista">
             ${PEDIDOS.map((g) => `
             <li class="pedido">
                 <strong class="pedido__marcas">${esc(g.marcas.join(" · "))}</strong>
                 ${g.dias.map((x) => `
                 <span class="pedido__dias">
-                    <span class="${x.pide === d ? "is-hoy" : ""}">Pedido <b>${DIAS[x.pide]}</b></span>
+                    <span class="${x.pide === d ? "is-hoy" : ""}">Pedido <b>${DIAS_SEMANA[x.pide]}</b></span>
                     <span aria-hidden="true">→</span>
-                    <span class="${x.llega === d ? "is-hoy" : ""}">entrega <b>${DIAS[x.llega]}</b></span>
+                    <span class="${x.llega === d ? "is-hoy" : ""}">entrega <b>${DIAS_SEMANA[x.llega]}</b></span>
                 </span>`).join("")}
             </li>`).join("")}
         </ul>
@@ -1583,7 +1684,7 @@ function vistaStock() {
 
     return `
     <section class="encabezado">
-        <h1>📦 Stock</h1>
+        <h1>🚚 Pedidos / 📦 Stock</h1>
         <p>Todas pueden cargar productos y actualizar cantidades con + y −. Si ponés un mínimo, avisa cuando queda poco.</p>
         <div class="glosario__totales">
             <span class="hoy__chip hoy__chip--fuerte">📦 ${todos.length} productos</span>

@@ -5,7 +5,7 @@
   box-shadow: 0 2px 12px var(--sombra);
 }
 
-.pedido__dias, .producto__info small, .progreso-local__texto span, .evento__cuerpo small, .saludo__donde, .momento__ayuda, .ficha__cabecera p, .semana-glosario__cabecera small, .nota__meta, .leyenda, .historial__cuando, .historial__meta, .bloque__meta, .formulario__ayuda, .lista-tareas li small, .encabezado p, .vacio, .login__marca p {
+.pedidos__subtitulo, .pedido__dias, .producto__info small, .progreso-local__texto span, .evento__cuerpo small, .saludo__donde, .momento__ayuda, .ficha__cabecera p, .semana-glosario__cabecera small, .nota__meta, .leyenda, .historial__cuando, .historial__meta, .bloque__meta, .formulario__ayuda, .lista-tareas li small, .encabezado p, .vacio, .login__marca p {
   color: var(--texto-suave);
   font-size: 0.9rem;
 }
@@ -380,102 +380,102 @@ p {
   animation: flotar 10s ease-in-out infinite;
 }
 .decoracion span:nth-child(1) {
-  top: 46%;
-  left: 75%;
-  font-size: 2.3rem;
-  animation-duration: 17s;
-  animation-delay: -5s;
-}
-.decoracion span:nth-child(2) {
-  top: 58%;
-  left: 89%;
-  font-size: 1.8rem;
-  animation-duration: 14s;
-  animation-delay: -8s;
-}
-.decoracion span:nth-child(3) {
-  top: 66%;
-  left: 16%;
-  font-size: 2.2rem;
-  animation-duration: 12s;
-  animation-delay: -8s;
-}
-.decoracion span:nth-child(4) {
-  top: 65%;
-  left: 6%;
-  font-size: 1.4rem;
-  animation-duration: 18s;
-  animation-delay: -4s;
-}
-.decoracion span:nth-child(5) {
-  top: 36%;
-  left: 18%;
-  font-size: 1.3rem;
-  animation-duration: 14s;
+  top: 60%;
+  left: 55%;
+  font-size: 2.4rem;
+  animation-duration: 13s;
   animation-delay: -2s;
 }
-.decoracion span:nth-child(6) {
-  top: 49%;
-  left: 35%;
+.decoracion span:nth-child(2) {
+  top: 71%;
+  left: 14%;
   font-size: 2rem;
-  animation-duration: 10s;
-  animation-delay: -7s;
+  animation-duration: 16s;
+  animation-delay: -2s;
+}
+.decoracion span:nth-child(3) {
+  top: 10%;
+  left: 91%;
+  font-size: 1.1rem;
+  animation-duration: 17s;
+  animation-delay: -3s;
+}
+.decoracion span:nth-child(4) {
+  top: 5%;
+  left: 35%;
+  font-size: 2.8rem;
+  animation-duration: 18s;
+  animation-delay: -2s;
+}
+.decoracion span:nth-child(5) {
+  top: 87%;
+  left: 27%;
+  font-size: 1.7rem;
+  animation-duration: 18s;
+  animation-delay: -6s;
+}
+.decoracion span:nth-child(6) {
+  top: 59%;
+  left: 34%;
+  font-size: 1.1rem;
+  animation-duration: 16s;
+  animation-delay: -3s;
 }
 .decoracion span:nth-child(7) {
-  top: 12%;
-  left: 7%;
-  font-size: 1.3rem;
-  animation-duration: 15s;
+  top: 55%;
+  left: 61%;
+  font-size: 1.7rem;
+  animation-duration: 18s;
   animation-delay: -8s;
 }
 .decoracion span:nth-child(8) {
-  top: 32%;
-  left: 70%;
-  font-size: 2.8rem;
-  animation-duration: 15s;
-  animation-delay: -8s;
+  top: 44%;
+  left: 33%;
+  font-size: 1.9rem;
+  animation-duration: 11s;
+  animation-delay: -4s;
 }
 .decoracion span:nth-child(9) {
-  top: 47%;
-  left: 21%;
-  font-size: 1.5rem;
-  animation-duration: 16s;
-  animation-delay: -4s;
+  top: 67%;
+  left: 42%;
+  font-size: 2.1rem;
+  animation-duration: 12s;
+  animation-delay: -5s;
 }
 .decoracion span:nth-child(10) {
-  top: 11%;
-  left: 45%;
-  font-size: 2.2rem;
-  animation-duration: 11s;
-  animation-delay: -8s;
-}
-.decoracion span:nth-child(11) {
-  top: 77%;
-  left: 33%;
-  font-size: 1.4rem;
-  animation-duration: 17s;
-  animation-delay: -7s;
-}
-.decoracion span:nth-child(12) {
-  top: 10%;
-  left: 21%;
-  font-size: 2.8rem;
-  animation-duration: 17s;
+  top: 57%;
+  left: 85%;
+  font-size: 2.5rem;
+  animation-duration: 13s;
   animation-delay: -4s;
 }
+.decoracion span:nth-child(11) {
+  top: 51%;
+  left: 67%;
+  font-size: 1.8rem;
+  animation-duration: 11s;
+  animation-delay: -5s;
+}
+.decoracion span:nth-child(12) {
+  top: 64%;
+  left: 89%;
+  font-size: 1.5rem;
+  animation-duration: 9s;
+  animation-delay: -8s;
+}
 .decoracion span:nth-child(13) {
-  top: 45%;
-  left: 70%;
-  font-size: 2rem;
-  animation-duration: 15s;
-  animation-delay: -3s;
+  top: 86%;
+  left: 44%;
+  font-size: 1.1rem;
+  animation-duration: 16s;
+  animation-delay: -5s;
 }
 .decoracion span:nth-child(14) {
-  top: 11%;
-  left: 13%;
-  font-size: 2.6rem;
-  animation-duration: 18s;
-  animation-delay: -1s;
+  top: 63%;
+  left: 11%;
+  font-size: 1.5rem;
+  animation-duration: 16s;
+  animation-delay: -8s;
 }
 
 .decoracion .decoracion__paseo {
@@ -737,8 +737,11 @@ p {
   border: none;
   background: none;
   color: var(--texto-suave);
+  min-width: 0;
   font-size: 0.7rem;
   font-weight: 800;
+  line-height: 1.1;
+  text-align: center;
   cursor: pointer;
   transition: color 0.2s ease;
 }
@@ -2761,9 +2764,22 @@ p {
   font-size: 1.05rem;
 }
 .pedidos__hoy {
-  padding: 6px 10px;
-  border-radius: 10px;
-  font-size: 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  font-size: 1.2rem;
+  line-height: 1.3;
+}
+.pedidos__hoy span {
+  font-size: 0.8rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.pedidos__hoy strong {
+  font-size: 1.25rem;
 }
 .pedidos__hoy--pide {
   background-color: var(--pospuesta-fondo);
@@ -2772,6 +2788,19 @@ p {
 .pedidos__hoy--llega {
   background-color: var(--ok-fondo);
   color: var(--texto);
+}
+.pedidos__nota {
+  padding: 8px 12px;
+  border-radius: 10px;
+  background-color: var(--primario-suave);
+  font-size: 0.95rem;
+}
+.pedidos__subtitulo {
+  margin-top: 4px;
+  font-size: 0.9rem;
+}
+.pedidos--aviso {
+  margin-bottom: 0;
 }
 .pedidos__lista {
   display: flex;
