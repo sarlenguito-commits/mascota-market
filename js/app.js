@@ -43,7 +43,7 @@ const estado = {
     notasEquipo: [],          // notas compartidas: todas las ven, escriben, editan y borran
     formNotaEquipo: null,     // nota nueva (modo texto o lista)
     edicionNotaEquipo: null,  // nota que se está editando (mismos campos + id)
-    recordatorios: [],        // recordatorios para cada chica (todas los ven; a cada una le aparecen los suyos en Hoy)
+    recordatorios: [],        // recordatorios De / Para (todas los ven; a cada una le aparecen los suyos en Hoy)
     formRecordatorio: null,   // recordatorio nuevo
     edicionRecordatorio: null, // recordatorio que se está editando (mismos campos + id)
     escuchando: false
@@ -1541,6 +1541,7 @@ function vistaActividad() {
         <p>Lo que pasó en los últimos 7 días. Se actualiza solo.</p>
     </section>
     <div class="progreso-locales">${progreso}</div>
+    ${recordatoriosHoy()}
     <div class="filtros">
         ${filtros.map(([id, txt]) => `<button class="filtros__item ${filtro === id ? "is-activo" : ""}" data-filtro-muro="${id}">${txt}</button>`).join("")}
     </div>
@@ -2208,14 +2209,15 @@ async function borrarNotaEquipo(id) {
 }
 
 // ---------- Vista: Recordatorios ----------
-// Al anotar uno se elige para quién es ("Recordatorio de: Sharon") y le aparece en su Hoy.
-// Todas los ven. Los editan o borran quien lo anotó y la chica a la que es.
+// Cada recordatorio es DE quien lo anota y PARA quien se elige (las chicas o Agustina).
+// Le aparece a la destinataria en su Hoy (a Agustina, en Actividad).
+// Todas los ven. Los editan o borran quien lo anotó y la destinataria.
 // Duran un tiempo (1 día … 1 mes, o hasta una fecha) o no vencen nunca. Los vencidos dejan de mostrarse.
 
 // [id, texto]. Los tiempos fijos usan los mismos días que las notas del equipo (venceEn).
 const DURACIONES_REC = [["sin", "♾️ Sin límite (hasta que lo borre)"], ["1d", "1 día"], ["3d", "3 días"], ["1s", "1 semana"], ["1m", "1 mes"], ["fecha", "📅 Hasta una fecha…"]];
-// Por defecto, para quien lo está escribiendo (Agustina no tiene "Hoy": elige a una de las chicas).
-const formRecordatorioVacio = () => ({ texto: "", duracion: "sin", fecha: "", persona: esDuena() ? empleadas()[0] : estado.persona });
+// "persona" = para quién es. Por defecto, para quien lo está escribiendo.
+const formRecordatorioVacio = () => ({ texto: "", duracion: "sin", fecha: "", persona: estado.persona });
 const formularioRec = (cual) => (cual === "edicion" ? estado.edicionRecordatorio : estado.formRecordatorio);
 const buscarRecordatorio = (id) => estado.recordatorios.find((r) => r.id === id);
 // Con fecha elegida vence al terminar ese día.
@@ -2228,9 +2230,10 @@ const puedeEditarRecordatorio = (r) => esParaMi(r) || r.autora === estado.person
 
 function camposRecordatorio(f, cual) {
     return `
-    <label>¿Para quién es?
+    <p class="rec-de"><strong>De:</strong> ${esc(nombre(f.autora || estado.persona))}${(f.autora || estado.persona) === estado.persona ? " (vos)" : ""}</p>
+    <label>Para:
         <select data-rec-campo="persona">
-            ${empleadas().map((id) => `<option value="${id}" ${f.persona === id ? "selected" : ""}>${esc(nombre(id))}${id === estado.persona ? " (vos)" : ""}</option>`).join("")}
+            ${Object.keys(PERSONAS).map((id) => `<option value="${id}" ${f.persona === id ? "selected" : ""}>${esc(nombre(id))}${id === estado.persona ? " (vos)" : ""}</option>`).join("")}
         </select>
     </label>
     <label>¿Qué hay que recordar?
@@ -2269,9 +2272,12 @@ function tarjetaRecordatorio(r, { resumen = false } = {}) {
     }
     return `
     <article class="nota nota--recordatorio ${esParaMi(r) ? "is-mio" : ""}">
-        <p class="nq-cabecera__titulo">🔔 Recordatorio de: ${esc(nombre(r.persona))}</p>
-        <p class="nota__texto">${esc(r.texto)}</p>
-        <p class="nota__meta">✍️ Anotado por ${esc(nombre(r.autora))} el ${cuandoLargo(r.creado)}${r.editado ? " · editado" : ""}</p>
+        <p class="rec-depara">
+            <span><strong>De:</strong> ${esc(nombre(r.autora))}</span>
+            <span><strong>Para:</strong> ${esc(nombre(r.persona))}</span>
+        </p>
+        <p class="nota__texto">🔔 ${esc(r.texto)}</p>
+        <p class="nota__meta">Anotado el ${cuandoLargo(r.creado)}${r.editado ? " · editado" : ""}</p>
         <div class="nq-pie">
             <span class="nq-pie__vence">${venceRecordatorioTexto(r)}</span>
             ${!resumen && puedeEditarRecordatorio(r) ? `
@@ -2283,7 +2289,7 @@ function tarjetaRecordatorio(r, { resumen = false } = {}) {
     </article>`;
 }
 
-// "Hoy": los recordatorios que son para esta chica y siguen vigentes.
+// "Hoy" de las chicas y "Actividad" de Agustina: los recordatorios que son para ella y siguen vigentes.
 function recordatoriosHoy() {
     const mios = recordatoriosVigentes().filter(esParaMi);
     if (!mios.length) return "";
@@ -2301,7 +2307,7 @@ function vistaRecordatorios() {
     return `
     <section class="encabezado">
         <h1>🔔 Recordatorios</h1>
-        <p>Elegí para quién es: le aparece en su "Hoy". Todas los ven, y los pueden editar o borrar quien lo anotó y la chica a la que es.</p>
+        <p>Elegí para quién es: le aparece en su "Hoy" (a Agustina, en Actividad). Todas los ven, y los pueden editar o borrar quien lo anotó y a quien va dirigido.</p>
     </section>
     <form class="formulario" id="form-recordatorio" data-rec-form="nuevo">
         <h2>➕ Nuevo recordatorio</h2>
@@ -2331,7 +2337,8 @@ async function agregarRecordatorio() {
         id: nuevoId("rec"), ...nuevo, autora: estado.persona, creado: cal.ahora().toISOString(), editado: ""
     });
     estado.formRecordatorio = formRecordatorioVacio();
-    aviso(nuevo.persona === estado.persona ? "Recordatorio guardado ✓ Te aparece en Hoy" : `Recordatorio guardado ✓ Le aparece a ${nombre(nuevo.persona)} en Hoy`, "ok");
+    const donde = (id) => (PERSONAS[id]?.rol === "duena" ? "Actividad" : "Hoy");
+    aviso(nuevo.persona === estado.persona ? `Recordatorio guardado ✓ Te aparece en ${donde(nuevo.persona)}` : `Recordatorio guardado ✓ Le aparece a ${nombre(nuevo.persona)} en ${donde(nuevo.persona)}`, "ok");
     render();
 }
 

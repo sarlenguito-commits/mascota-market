@@ -15,7 +15,7 @@ Además:
   - Cada nota tiene un **tiempo de desaparición** (1 día, 3 días, 1 semana, 1 mes). Con **📌 "Hasta que yo la quite"** no vence y solo la puede borrar (o cambiarle el tiempo) quien la escribió.
   - En **"Hoy"** de las chicas, **abajo de todo**, aparecen las notas vigentes con quién la escribió, el día y la hora.
 - **🔒 Bloc privado de Agustina** (en Más): notas que solo ve ella.
-- **🔔 Recordatorios**: al anotar uno se elige **para quién es** (Ailin, Sharon o Sofía) y le aparece en **su "Hoy"** ("🔔 Recordatorio de: Sharon", con quién lo anotó). Todas los ven; lo editan o borran quien lo anotó y la chica a la que es. Cada uno dura un tiempo (1 día, 3 días, 1 semana, 1 mes o hasta una fecha) o queda **sin límite** hasta que lo borren. Agustina los ve en Más y también puede anotarles recordatorios.
+- **🔔 Recordatorios**: cada uno dice **De:** (quien lo anota) y **Para:** (se elige entre Ailin, Sharon, Sofía o Agustina). A quien va dirigido le aparece en **su "Hoy"** (a Agustina, en **Actividad**). Todas los ven; lo editan o borran quien lo anotó y a quien va dirigido. Cada uno dura un tiempo (1 día, 3 días, 1 semana, 1 mes o hasta una fecha) o queda **sin límite** hasta que lo borren. Agustina entra desde Más.
 - En la barra de las chicas, **Glosario** y **Locales** pasaron al menú **Más**.
 - **📖 Glosario**: todas las tareas de los dos locales con quién hace cada una según la semana, el total y un buscador.
 - **🚚 Pedidos**:

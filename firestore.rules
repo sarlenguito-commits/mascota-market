@@ -141,13 +141,13 @@ service cloud.firestore {
           || (request.resource.data.duracion == resource.data.duracion && request.resource.data.vence == resource.data.vence));
     }
 
-    // Recordatorios: "persona" = para quién es (una de las chicas; le aparece en su Hoy), "autora" = quién lo anotó.
-    // Todas los ven, anotan, editan y borran (que lo editen solo la autora y la destinataria lo controla la app).
+    // Recordatorios: "autora" = DE quién es (quien lo anotó), "persona" = PARA quién es (le aparece en su Hoy o, a Agustina, en Actividad).
+    // Todas los ven, anotan, editan y borran (que lo editen solo quien lo anotó y a quien va dirigido lo controla la app).
     // Nadie puede anotar a nombre de Agustina si no es ella, ni cambiar quién lo anotó o cuándo.
     match /recordatorios/{id} {
       allow read, delete: if esDelEquipo();
       allow create, update: if esDelEquipo()
-        && request.resource.data.persona in ['ailin', 'sharon', 'sofia']
+        && request.resource.data.persona in ['ailin', 'sharon', 'sofia', 'agustina']
         && request.resource.data.autora in ['ailin', 'sharon', 'sofia', 'agustina']
         // Al crear: la autora es quien está logueada. Al editar: no cambian la autora ni la fecha de creación.
         && ((resource == null && (request.resource.data.autora == 'agustina') == esAgustina())

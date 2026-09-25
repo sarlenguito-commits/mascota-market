@@ -236,12 +236,25 @@
     }
 }
 
-// ---------- Recordatorios (cada uno dice de quién es) ----------
+// ---------- Recordatorios (De / Para) ----------
+
+// "De: Sharon   Para: Sofía" arriba de cada recordatorio
+.rec-depara {
+    @include flex(row, $gap: 16px);
+    flex-wrap: wrap;
+    color: $color-pospuesta;
+    font-size: 0.9rem;
+}
+
+// "De:" fijo en el formulario (siempre es quien lo está anotando)
+.rec-de {
+    font-weight: 700;
+}
 
 .nota--recordatorio {
     border-left-color: $color-pospuesta;
 
-    // Los propios, resaltados
+    // Los que son para mí, resaltados
     &.is-mio {
         background-color: $color-pospuesta-fondo;
     }
