@@ -380,102 +380,102 @@ p {
   animation: flotar 10s ease-in-out infinite;
 }
 .decoracion span:nth-child(1) {
-  top: 39%;
-  left: 63%;
-  font-size: 1.3rem;
-  animation-duration: 15s;
-  animation-delay: -3s;
+  top: 29%;
+  left: 87%;
+  font-size: 1.9rem;
+  animation-duration: 10s;
+  animation-delay: -1s;
 }
 .decoracion span:nth-child(2) {
-  top: 49%;
-  left: 23%;
-  font-size: 2.4rem;
-  animation-duration: 11s;
-  animation-delay: -6s;
+  top: 32%;
+  left: 1%;
+  font-size: 2.8rem;
+  animation-duration: 13s;
+  animation-delay: -8s;
 }
 .decoracion span:nth-child(3) {
-  top: 25%;
-  left: 22%;
+  top: 29%;
+  left: 51%;
   font-size: 2.6rem;
-  animation-duration: 17s;
-  animation-delay: -6s;
+  animation-duration: 18s;
+  animation-delay: -5s;
 }
 .decoracion span:nth-child(4) {
-  top: 28%;
-  left: 46%;
-  font-size: 2rem;
-  animation-duration: 17s;
+  top: 75%;
+  left: 35%;
+  font-size: 1.8rem;
+  animation-duration: 14s;
   animation-delay: -4s;
 }
 .decoracion span:nth-child(5) {
-  top: 1%;
-  left: 19%;
-  font-size: 1.7rem;
-  animation-duration: 16s;
-  animation-delay: -7s;
-}
-.decoracion span:nth-child(6) {
-  top: 68%;
-  left: 91%;
-  font-size: 1.8rem;
-  animation-duration: 17s;
-  animation-delay: -6s;
-}
-.decoracion span:nth-child(7) {
-  top: 51%;
-  left: 5%;
-  font-size: 1.6rem;
-  animation-duration: 15s;
-  animation-delay: -2s;
-}
-.decoracion span:nth-child(8) {
-  top: 77%;
-  left: 52%;
-  font-size: 1.2rem;
-  animation-duration: 11s;
-  animation-delay: -6s;
-}
-.decoracion span:nth-child(9) {
-  top: 67%;
-  left: 35%;
-  font-size: 2.6rem;
+  top: 85%;
+  left: 85%;
+  font-size: 1.5rem;
   animation-duration: 9s;
-  animation-delay: -1s;
-}
-.decoracion span:nth-child(10) {
-  top: 54%;
-  left: 75%;
-  font-size: 1.3rem;
-  animation-duration: 13s;
-  animation-delay: -6s;
-}
-.decoracion span:nth-child(11) {
-  top: 65%;
-  left: 15%;
-  font-size: 2.2rem;
-  animation-duration: 10s;
   animation-delay: -3s;
 }
+.decoracion span:nth-child(6) {
+  top: 53%;
+  left: 44%;
+  font-size: 2.1rem;
+  animation-duration: 9s;
+  animation-delay: -5s;
+}
+.decoracion span:nth-child(7) {
+  top: 12%;
+  left: 91%;
+  font-size: 2.3rem;
+  animation-duration: 18s;
+  animation-delay: -6s;
+}
+.decoracion span:nth-child(8) {
+  top: 82%;
+  left: 38%;
+  font-size: 1.3rem;
+  animation-duration: 12s;
+  animation-delay: -5s;
+}
+.decoracion span:nth-child(9) {
+  top: 64%;
+  left: 60%;
+  font-size: 1.5rem;
+  animation-duration: 16s;
+  animation-delay: -6s;
+}
+.decoracion span:nth-child(10) {
+  top: 71%;
+  left: 19%;
+  font-size: 1.4rem;
+  animation-duration: 9s;
+  animation-delay: -3s;
+}
+.decoracion span:nth-child(11) {
+  top: 70%;
+  left: 23%;
+  font-size: 1.7rem;
+  animation-duration: 16s;
+  animation-delay: -2s;
+}
 .decoracion span:nth-child(12) {
-  top: 77%;
-  left: 71%;
-  font-size: 1.6rem;
+  top: 30%;
+  left: 59%;
+  font-size: 1.5rem;
+  animation-duration: 14s;
+  animation-delay: -4s;
+}
+.decoracion span:nth-child(13) {
+  top: 42%;
+  left: 17%;
+  font-size: 1.9rem;
   animation-duration: 15s;
   animation-delay: -8s;
 }
-.decoracion span:nth-child(13) {
-  top: 80%;
-  left: 84%;
-  font-size: 1.7rem;
-  animation-duration: 14s;
-  animation-delay: -5s;
-}
 .decoracion span:nth-child(14) {
-  top: 14%;
-  left: 7%;
+  top: 90%;
+  left: 93%;
   font-size: 1.1rem;
-  animation-duration: 15s;
-  animation-delay: -2s;
+  animation-duration: 10s;
+  animation-delay: -4s;
 }
 
 .decoracion .decoracion__paseo {
@@ -2227,6 +2227,38 @@ p {
 }
 .nq-items .boton--chico {
   align-self: flex-start;
+}
+
+.checklist__sabado {
+  display: block;
+  margin-top: 2px;
+  color: var(--atrasada);
+  font-size: 0.85rem;
+}
+.checklist__listo {
+  color: var(--ok);
+  font-weight: 800;
+}
+.checklist__fijo {
+  cursor: default;
+}
+.checklist__fijo:hover {
+  background: none;
+}
+.checklist__dia {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+}
+.checklist__dia input {
+  padding: 8px 10px;
+  border: 1px solid var(--borde);
+  border-radius: 10px;
+  background-color: var(--superficie);
+  color: var(--texto);
+  font: inherit;
 }
 
 .rec-depara {

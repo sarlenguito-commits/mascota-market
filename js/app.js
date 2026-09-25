@@ -2,7 +2,7 @@
 // Interfaz: login, bienvenida, hoy (3 momentos), cambio de turno, calendario por semanas,
 // glosario, locales y, para Agustina, actividad, informes, tareas y bloc de notas.
 // ============================================
-import { PERSONAS, LOCALES, CLAVE_EQUIPO_PRUEBA, MINUTOS_BLOQUEO, PEDIDOS, FORMAS_PAGO } from "./config.js";
+import { PERSONAS, LOCALES, CLAVE_EQUIPO_PRUEBA, MINUTOS_BLOQUEO, PEDIDOS, FORMAS_PAGO, CHECKLISTS } from "./config.js";
 import * as cal from "./calendario.js";
 import * as datos from "./datos.js";
 
@@ -46,6 +46,8 @@ const estado = {
     recordatorios: [],        // recordatorios De / Para (todas los ven; a cada una le aparecen los suyos en Hoy)
     formRecordatorio: null,   // recordatorio nuevo
     edicionRecordatorio: null, // recordatorio que se está editando (mismos campos + id)
+    checklists: [],           // lo tildado de cada checklist por día (id = <checklist>_<fecha>)
+    fechaChecklist: null,     // día que se ve en la pantalla Checklist ("YYYY-MM-DD"; null = hoy)
     escuchando: false
 };
 
@@ -90,6 +92,7 @@ const iniciar = () => datos.escucharSesion((persona) => {
         datos.escucharColeccion("pedidosDia", (lista) => { estado.pedidosDia = lista; render(); });
         datos.escucharColeccion("notasEquipo", (lista) => { estado.notasEquipo = lista; render(); });
         datos.escucharColeccion("recordatorios", (lista) => { estado.recordatorios = lista; render(); });
+        datos.escucharColeccion("checklists", (lista) => { estado.checklists = lista; render(); });
         // El bloc de notas es privado: solo Agustina lo lee.
         if (PERSONAS[persona]?.rol === "duena") {
             datos.escucharColeccion("notasDuena", (lista) => { estado.notasDuena = lista; render(); });
@@ -261,9 +264,11 @@ function alternarTema() {
 // "Recorda­torios" lleva un guion opcional: si no entra, se parte en dos renglones.
 const NAV_EMPLEADA = [["hoy", "sun", "Hoy"], ["turno", "arrows-exchange", "Turno"], ["calendario", "calendar", "Calendario"], ["pedidos", "truck", "Pedidos"], ["notas", "notes", "Notas"], ["recordatorios", "bell", "Recorda­torios"], ["mas", "dots", "Más"]];
 const NAV_DUENA = [["actividad", "activity", "Actividad"], ["tareas", "clipboard-plus", "Tareas"], ["calendario", "calendar", "Calendario"], ["notas", "notes", "Notas"], ["mas", "dots", "Más"]];
-const MAS_DUENA = [["informes", "chart-bar", "Informes"], ["turno", "arrows-exchange", "Cambio de turno"], ["locales", "building-store", "Locales"], ["glosario", "book", "Glosario"], ["pedidos", "truck", "Pedidos"], ["historialPedidos", "archive", "Pedidos entregados"], ["recordatorios", "bell", "Recordatorios"], ["bloc", "lock", "Mi bloc privado"]];
+const MAS_DUENA = [["informes", "chart-bar", "Informes"], ["turno", "arrows-exchange", "Cambio de turno"], ["locales", "building-store", "Locales"], ["glosario", "book", "Glosario"], ["pedidos", "truck", "Pedidos"], ["historialPedidos", "archive", "Pedidos entregados"], ["recordatorios", "bell", "Recordatorios"], ["checklist", "list-check", "Checklist"], ["bloc", "lock", "Mi bloc privado"]];
 const MAS_EMPLEADA = [["glosario", "book", "Glosario"], ["locales", "building-store", "Locales"]];
-const menuMas = () => (esDuena() ? MAS_DUENA : MAS_EMPLEADA);
+// "Checklist" aparece solo a quien tiene alguno (por ahora, Sharon).
+const menuMas = () => (esDuena() ? MAS_DUENA
+    : [...MAS_EMPLEADA, ...(CHECKLISTS.some((c) => c.persona === estado.persona) ? [["checklist", "list-check", "Checklist"]] : [])]);
 
 function irA(vista) {
     estado.vista = vista;
@@ -284,7 +289,7 @@ function render() {
         hoy: vistaHoy, turno: vistaTurno, calendario: vistaCalendario, locales: vistaLocales,
         informes: vistaInformes, tareas: vistaTareas, notas: vistaNotasEquipo, bloc: vistaNotas, glosario: vistaGlosario,
         actividad: vistaActividad, mas: vistaMas, pedidos: vistaPedidos, historialPedidos: vistaHistorialPedidos,
-        recordatorios: vistaRecordatorios
+        recordatorios: vistaRecordatorios, checklist: vistaChecklist
     };
     const contenido = (vistas[estado.vista] || vistaHoy)();
 
@@ -452,6 +457,10 @@ function conectarEventos() {
     on("[data-rec-editar]", "click", (el) => editarRecordatorio(el.dataset.recEditar));
     on("[data-rec-cancelar]", "click", () => { estado.edicionRecordatorio = null; render(); });
     on("[data-rec-borrar]", "click", (el) => borrarRecordatorio(el.dataset.recBorrar));
+
+    // Checklists
+    on("[data-check-tildar]", "click", (el) => tildarChecklist(el.dataset.checkTildar, el.dataset.item));
+    on("[data-check-fecha]", "change", (el) => { estado.fechaChecklist = el.value || null; render(); });
 }
 
 // ---------- Acciones sobre tareas ----------
@@ -719,6 +728,7 @@ function vistaHoy() {
         <h2 class="momento__titulo">🔄 Del turno anterior</h2>
         ${notasTurno.map((n) => tarjetaNotaTurno(n)).join("")}
     </section>` : ""}
+    ${checklistsHoy()}
     <section class="momento">
         <h2 class="momento__titulo">Tareas de hoy${porHacer ? ` · ${porHacer} por hacer` : ""}</h2>
         ${grupo("⏭️ Quedó de ayer", deAyer)}
@@ -1504,6 +1514,22 @@ function vistaActividad() {
         eventos.push({
             cuando: a.cuando, local: null, persona: "agustina", icono: "📌",
             texto: `agendó para ${esc(paraQuien(a.para))} el ${cal.fechaLarga(cal.desdeIso(a.fecha))}`, extra: esc(a.texto)
+        });
+    }
+
+    for (const x of estado.checklists) {
+        const c = CHECKLISTS.find((k) => k.id === x.checklist);
+        if (!c || x.fecha < desde) continue;
+        const faltan = c.items.filter((it) => !x.hechos?.[it.id]);
+        const hechos = c.items.length - faltan.length;
+        if (!hechos) continue;
+        eventos.push({
+            cuando: (x.completo && x.completoEn) || x.actualizado, local: x.local, persona: x.persona,
+            icono: x.completo ? "✅" : "📋",
+            texto: x.completo
+                ? `completó el checklist <strong>${esc(c.titulo)}</strong>`
+                : `hizo ${hechos} de ${c.items.length} del checklist <strong>${esc(c.titulo)}</strong>`,
+            extra: x.completo ? "" : `Falta: ${faltan.map((it) => esc(it.texto)).join(" · ")}`
         });
     }
 
@@ -2373,6 +2399,105 @@ async function borrarRecordatorio(id) {
     await datos.borrarDe("recordatorios", id);
     if (estado.edicionRecordatorio?.id === id) estado.edicionRecordatorio = null;
     aviso("Recordatorio borrado");
+}
+
+// ---------- Checklists (config.js > CHECKLISTS) ----------
+// Se tildan cada día (lo tildado se guarda por día: al día siguiente arranca vacío).
+// En Hoy aparece el del local donde está la persona según su turno; Agustina ve en Actividad cómo fue.
+
+const checklistsDe = (persona) => CHECKLISTS.filter((c) => c.persona === persona);
+const idChecklistDia = (c, fecha) => `${c.id}_${fecha}`;
+const registroChecklist = (c, fecha) => estado.checklists.find((x) => x.id === idChecklistDia(c, fecha));
+const cuentaChecklist = (c, fecha) => {
+    const hechos = registroChecklist(c, fecha)?.hechos || {};
+    return c.items.filter((it) => hechos[it.id]).length;
+};
+
+// editable: se puede tildar (solo la dueña del checklist, y solo el día de hoy).
+function tarjetaChecklist(c, fecha, { editable = false } = {}) {
+    const registro = registroChecklist(c, fecha);
+    const hechos = registro?.hechos || {};
+    const n = cuentaChecklist(c, fecha);
+    const completo = n === c.items.length;
+    const esSabado = cal.desdeIso(fecha).getDay() === 6;
+    return `
+    <article class="nota nota--equipo checklist ${completo ? "is-completa" : ""}">
+        <header class="nq-cabecera">
+            <h3 class="nq-cabecera__titulo">${c.icono} ${esc(c.titulo)}</h3>
+            <span class="nq-cabecera__progreso">${n}/${c.items.length}</span>
+        </header>
+        <ul class="nq-lista">
+            ${c.items.map((it) => {
+                const hecho = hechos[it.id];
+                const contenido = `
+                    <span class="check ${hecho ? "is-ok" : ""}" aria-hidden="true">${hecho ? `<i class="ti ti-check"></i>` : ""}</span>
+                    <span class="nq-lista__texto">${esc(it.texto)}${it.sabado && esSabado && !hecho ? `<strong class="checklist__sabado">⚠️ ${esc(it.sabado)}</strong>` : ""}</span>
+                    ${hecho ? `<small class="nq-lista__quien">${hora(hecho)}</small>` : ""}`;
+                return `
+            <li>${editable
+                    ? `<button class="nq-lista__item ${hecho ? "is-hecho" : ""}" data-check-tildar="${c.id}" data-item="${it.id}" aria-pressed="${!!hecho}">${contenido}</button>`
+                    : `<div class="nq-lista__item checklist__fijo ${hecho ? "is-hecho" : ""}">${contenido}</div>`}</li>`;
+            }).join("")}
+        </ul>
+        ${completo ? `<p class="checklist__listo">🎉 ¡Completo!${registro?.completoEn ? ` Terminado a las ${hora(registro.completoEn)}` : ""}</p>` : ""}
+    </article>`;
+}
+
+// "Hoy": el checklist del local donde está ahora (los demás de hoy, resumidos). Domingo no hay.
+function checklistsHoy() {
+    const hoy = cal.ahora();
+    const mios = checklistsDe(estado.persona);
+    if (!mios.length || hoy.getDay() === 0) return "";
+    const fecha = cal.iso(hoy);
+    const local = cal.dondeEsta(estado.persona, hoy)?.local;
+    const actual = mios.find((c) => c.local === local) || mios[0];
+    const otros = mios.filter((c) => c !== actual);
+    return `
+    <section class="momento">
+        <h2 class="momento__titulo">✅ Tu checklist</h2>
+        ${tarjetaChecklist(actual, fecha, { editable: true })}
+        ${otros.map((c) => {
+            const n = cuentaChecklist(c, fecha);
+            return `<button class="boton boton--suave" data-ir="checklist">${c.icono} ${esc(c.titulo)}: ${n}/${c.items.length}${n === c.items.length ? " ✓" : ""}</button>`;
+        }).join("")}
+    </section>`;
+}
+
+function vistaChecklist() {
+    const hoyIso = cal.iso(cal.ahora());
+    const fecha = estado.fechaChecklist || hoyIso;
+    const lista = esDuena() ? CHECKLISTS : checklistsDe(estado.persona);
+    return `
+    <section class="encabezado">
+        <h1>✅ Checklist</h1>
+        <p>${esDuena()
+            ? "Lo que tildó cada una en su checklist. Elegí un día para ver cómo fue."
+            : "Tildá cada cosa a medida que la hacés. Todos los días arranca vacío."}</p>
+        <label class="checklist__dia">📅 Día
+            <input type="date" data-check-fecha value="${fecha}" max="${hoyIso}">
+        </label>
+    </section>
+    ${lista.length ? lista.map((c, i) => `
+    ${esDuena() && c.persona !== lista[i - 1]?.persona ? `<h2 class="bloque__titulo">${esc(nombre(c.persona))}</h2>` : ""}
+    ${tarjetaChecklist(c, fecha, { editable: !esDuena() && c.persona === estado.persona && fecha === hoyIso })}`).join("")
+        : `<p class="vacio">No tenés checklists.</p>`}`;
+}
+
+async function tildarChecklist(id, itemId) {
+    const c = CHECKLISTS.find((x) => x.id === id);
+    if (!c || c.persona !== estado.persona) return;
+    const ahora = cal.ahora();
+    const fecha = cal.iso(ahora);
+    const previo = registroChecklist(c, fecha);
+    const hechos = { ...(previo?.hechos || {}) };
+    if (hechos[itemId]) delete hechos[itemId];
+    else hechos[itemId] = ahora.toISOString();
+    const completo = c.items.every((it) => hechos[it.id]);
+    await datos.guardarEn("checklists", {
+        id: idChecklistDia(c, fecha), checklist: c.id, persona: c.persona, local: c.local, fecha, hechos, completo,
+        completoEn: completo ? previo?.completoEn || ahora.toISOString() : "", actualizado: ahora.toISOString()
+    });
+    if (completo && !previo?.completo) aviso(`🎉 ¡Checklist ${c.titulo} completo!`, "ok");
 }
 
 // ---------- Vista: Bloc de notas (Agustina) ----------

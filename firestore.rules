@@ -162,6 +162,22 @@ service cloud.firestore {
         && request.resource.data.editado is string;
     }
 
+    // Checklists del día (id = <checklist>_<fecha>; los ítems están en config.js): todas los ven,
+    // los tilda la cuenta del equipo (Agustina solo mira). Al día siguiente se usa otro documento.
+    match /checklists/{id} {
+      allow read: if esDelEquipo();
+      allow create, update: if esDelEquipo() && !esAgustina()
+        && request.resource.data.persona in ['ailin', 'sharon', 'sofia']
+        && request.resource.data.local in ['diagonal', 'rivadavia']
+        && request.resource.data.checklist is string && request.resource.data.checklist.size() <= 60
+        && request.resource.data.fecha is string && request.resource.data.fecha.size() == 10
+        && id == request.resource.data.checklist + '_' + request.resource.data.fecha
+        && request.resource.data.hechos is map && request.resource.data.hechos.size() <= 50
+        && request.resource.data.completo is bool
+        && request.resource.data.completoEn is string
+        && request.resource.data.actualizado is string;
+    }
+
     // Bloc de notas de Agustina: privado, nadie más lo puede leer.
     match /notasDuena/{id} {
       allow read, write: if esAgustina();

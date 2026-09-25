@@ -236,6 +236,48 @@
     }
 }
 
+// ---------- Checklists ----------
+
+.checklist {
+    // Aviso del sábado (ej. "se saca la basura sí o sí")
+    &__sabado {
+        display: block;
+        margin-top: 2px;
+        color: $color-atrasada;
+        font-size: 0.85rem;
+    }
+
+    // Terminado
+    &__listo {
+        color: $color-ok;
+        font-weight: 800;
+    }
+
+    // Vista de solo lectura (Agustina o días pasados): no se toca
+    &__fijo {
+        cursor: default;
+
+        &:hover {
+            background: none;
+        }
+    }
+
+    // Selector de día en la pantalla Checklist
+    &__dia {
+        @include flex(row, $align: center, $gap: 8px);
+        font-weight: 700;
+
+        input {
+            padding: 8px 10px;
+            border: 1px solid $color-borde;
+            border-radius: $radio-medio;
+            background-color: $color-superficie;
+            color: $color-texto;
+            font: inherit;
+        }
+    }
+}
+
 // ---------- Recordatorios (De / Para) ----------
 
 // "De: Sharon   Para: Sofía" arriba de cada recordatorio

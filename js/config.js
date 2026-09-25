@@ -97,3 +97,41 @@ export const PEDIDOS = [
 
 // Formas de pago para los pedidos de clientes (es opcional: se puede dejar "Todavía no se sabe").
 export const FORMAS_PAGO = ["Efectivo", "Transferencia Mercado Pago", "QR Mercado Pago", "Débito", "Crédito"];
+
+// ---------- Checklists (por persona y local) ----------
+// Se tildan cada día y al día siguiente arrancan vacíos. En "Hoy" le aparece a la persona el del local
+// donde está según su turno, y Agustina ve en Actividad si se completó.
+// Cada ítem tiene un id fijo (no cambiarlo: con él se guarda lo tildado). "sabado" = aviso que se resalta los sábados.
+export const CHECKLISTS = [
+    {
+        id: "sharon-diagonal", persona: "sharon", local: "diagonal", titulo: "Diagonal", icono: "📋",
+        items: [
+            { id: "pava", texto: "Pava desenchufada" },
+            { id: "barrer", texto: "Barrer y limpiar el local" },
+            { id: "luces", texto: "Luces prendidas y apagadas, según corresponda" },
+            { id: "posnet", texto: "Posnet conectado" },
+            { id: "comederos", texto: "Estante de comederos y demás sin polvo" },
+            { id: "agua", texto: "Cambiar el agua de los perris" },
+            { id: "reponer", texto: "Reponer y frentear productos" },
+            { id: "llave", texto: "Llave de los candados en la caja" },
+            { id: "separar", texto: "Ver si separé cosas (si se pidió)" }
+        ]
+    },
+    {
+        id: "sharon-cierre-rivadavia", persona: "sharon", local: "rivadavia", titulo: "Cierre del local · Rivadavia", icono: "🔒",
+        items: [
+            { id: "aire", texto: "Apagar el aire acondicionado (controlar que quedó apagado)" },
+            { id: "basura", texto: "Basura: revisar si hay que sacarla y poner bolsa nueva", sabado: "Hoy es sábado: se saca sí o sí (los 3 tachos)" },
+            { id: "productos", texto: "Productos: enviar al grupo los que hay que traer de Diagonal" },
+            { id: "wash", texto: "Si se usó el Wash: limpiar los pelos debajo de la reja de la bañera" },
+            { id: "balde", texto: "Tirar el agua del balde y limpiarlo" },
+            { id: "alfombra", texto: "Entrar la alfombra" },
+            { id: "luces", texto: "Apagar luces: vestidor, salón y galpón (depósito)" },
+            { id: "compu", texto: "Compu bien enchufada" },
+            { id: "cartel", texto: "Apagar el cartel \"Abierto\"" },
+            { id: "posnet", texto: "Dejar cargando el posnet" },
+            { id: "celu", texto: "Dejar cargando el celu" },
+            { id: "luz-afuera", texto: "Luz de afuera prendida" }
+        ]
+    }
+];
