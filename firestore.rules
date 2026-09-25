@@ -171,7 +171,6 @@ service cloud.firestore {
         && request.resource.data.local in ['diagonal', 'rivadavia']
         && request.resource.data.checklist is string && request.resource.data.checklist.size() <= 60
         && request.resource.data.fecha is string && request.resource.data.fecha.size() == 10
-        && id == request.resource.data.checklist + '_' + request.resource.data.fecha
         && request.resource.data.hechos is map && request.resource.data.hechos.size() <= 50
         && request.resource.data.completo is bool
         && request.resource.data.completoEn is string

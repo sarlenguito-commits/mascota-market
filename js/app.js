@@ -2540,4 +2540,14 @@ async function guardarNotaDuena() {
     render();
 }
 
+// Si algo no se pudo guardar o leer (sin conexión, reglas de Firebase…), avisarlo en vez de fallar en silencio.
+const avisoError = (codigo, accion) => aviso(codigo === "permission-denied"
+    ? `⚠️ No se pudo ${accion}: Firebase no dio permiso (revisar las reglas)`
+    : `⚠️ No se pudo ${accion}${codigo ? ` (${codigo})` : ""}. Probá de nuevo.`, "aplazada");
+window.addEventListener("unhandledrejection", (e) => {
+    console.error(e.reason);
+    avisoError(e.reason?.code || "", "guardar");
+});
+window.addEventListener("mm-error-lectura", (e) => avisoError(e.detail.codigo, `cargar ${e.detail.coleccion}`));
+
 iniciar();

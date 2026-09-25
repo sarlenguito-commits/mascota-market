@@ -273,7 +273,15 @@ export async function escucharColeccion(col, cb) {
         return;
     }
     const { db, fsMod } = await cargarFirebase();
-    fsMod.onSnapshot(fsMod.collection(db, col), (snap) => cb(snap.docs.map((d) => ({ id: d.id, ...d.data() }))));
+    fsMod.onSnapshot(
+        fsMod.collection(db, col),
+        (snap) => cb(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
+        // Si Firebase no deja leer (ej. reglas sin publicar), la app lo avisa (ver "mm-error-lectura" en app.js).
+        (error) => {
+            console.error(`No se pudo leer "${col}"`, error);
+            window.dispatchEvent(new CustomEvent("mm-error-lectura", { detail: { coleccion: col, codigo: error.code } }));
+        }
+    );
 }
 
 export async function guardarEn(col, docu) {
