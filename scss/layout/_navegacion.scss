@@ -24,7 +24,8 @@
         background: none;
         color: $color-texto-suave;
         min-width: 0; // columnas parejas aunque un texto sea largo ("Pedidos/Stock" se parte en dos renglones)
-        font-size: 0.7rem;
+        // Se achica un poco en celulares angostos para que entren los 7 botones de las chicas ("Calendario" es el más largo).
+        font-size: clamp(0.6rem, 2.7vw, 0.7rem);
         font-weight: 800;
         line-height: 1.1;
         text-align: center;

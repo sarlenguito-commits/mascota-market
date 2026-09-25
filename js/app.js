@@ -40,6 +40,9 @@ const estado = {
     buscarHistorial: "",
     pedidoEditando: null,
     edicionPedido: {},
+    notasEquipo: [],          // notas compartidas: todas las ven, escriben, editan y borran
+    formNotaEquipo: null,     // nota nueva (modo texto o lista)
+    edicionNotaEquipo: null,  // nota que se está editando (mismos campos + id)
     escuchando: false
 };
 
@@ -82,6 +85,7 @@ const iniciar = () => datos.escucharSesion((persona) => {
         datos.escucharColeccion("agenda", (lista) => { estado.agenda = lista; render(); });
         datos.escucharColeccion("pedidosClientes", (lista) => { estado.pedidosClientes = lista; render(); });
         datos.escucharColeccion("pedidosDia", (lista) => { estado.pedidosDia = lista; render(); });
+        datos.escucharColeccion("notasEquipo", (lista) => { estado.notasEquipo = lista; render(); });
         // El bloc de notas es privado: solo Agustina lo lee.
         if (PERSONAS[persona]?.rol === "duena") {
             datos.escucharColeccion("notasDuena", (lista) => { estado.notasDuena = lista; render(); });
@@ -250,9 +254,9 @@ function alternarTema() {
 // ---------- Navegación (barra de abajo en el celular) ----------
 
 // [vista, ícono (Tabler), texto]
-const NAV_EMPLEADA = [["hoy", "sun", "Hoy"], ["turno", "arrows-exchange", "Turno"], ["calendario", "calendar", "Calendario"], ["glosario", "book", "Glosario"], ["locales", "building-store", "Locales"], ["pedidos", "truck", "Pedidos"]];
+const NAV_EMPLEADA = [["hoy", "sun", "Hoy"], ["turno", "arrows-exchange", "Turno"], ["calendario", "calendar", "Calendario"], ["glosario", "book", "Glosario"], ["locales", "building-store", "Locales"], ["pedidos", "truck", "Pedidos"], ["notas", "notes", "Notas"]];
 const NAV_DUENA = [["actividad", "activity", "Actividad"], ["tareas", "clipboard-plus", "Tareas"], ["calendario", "calendar", "Calendario"], ["notas", "notes", "Notas"], ["mas", "dots", "Más"]];
-const MAS_DUENA = [["informes", "chart-bar", "Informes"], ["turno", "arrows-exchange", "Cambio de turno"], ["locales", "building-store", "Locales"], ["glosario", "book", "Glosario"], ["pedidos", "truck", "Pedidos"], ["historialPedidos", "archive", "Pedidos entregados"]];
+const MAS_DUENA = [["informes", "chart-bar", "Informes"], ["turno", "arrows-exchange", "Cambio de turno"], ["locales", "building-store", "Locales"], ["glosario", "book", "Glosario"], ["pedidos", "truck", "Pedidos"], ["historialPedidos", "archive", "Pedidos entregados"], ["bloc", "lock", "Mi bloc privado"]];
 // El menú "Más" es solo de Agustina (las chicas tienen todo en la barra).
 const menuMas = () => (esDuena() ? MAS_DUENA : []);
 
@@ -273,7 +277,7 @@ function render() {
 
     const vistas = {
         hoy: vistaHoy, turno: vistaTurno, calendario: vistaCalendario, locales: vistaLocales,
-        informes: vistaInformes, tareas: vistaTareas, notas: vistaNotas, glosario: vistaGlosario,
+        informes: vistaInformes, tareas: vistaTareas, notas: vistaNotasEquipo, bloc: vistaNotas, glosario: vistaGlosario,
         actividad: vistaActividad, mas: vistaMas, pedidos: vistaPedidos, historialPedidos: vistaHistorialPedidos
     };
     const contenido = (vistas[estado.vista] || vistaHoy)();
@@ -410,6 +414,27 @@ function conectarEventos() {
     on("[data-nota-duena]", "input", (el) => { estado.textoNotaDuena = el.value; });
     on("#form-notas", "submit", (el, e) => { e.preventDefault(); guardarNotaDuena(); });
     on("[data-borrar-nota-duena]", "click", (el) => borrarConConfirmacion("notasDuena", el.dataset.borrarNotaDuena, "¿Borrar esta nota?"));
+
+    // Notas del equipo (data-nq-form = "nueva" | "edicion" dice a qué formulario pertenece cada campo)
+    const formNq = (el) => formularioNota(el.closest("[data-nq-form]").dataset.nqForm);
+    on("[data-nq-tipo]", "click", (el) => { formNq(el).tipo = el.dataset.nqTipo; render(); });
+    on("[data-nq-campo]", "input", (el) => { formNq(el)[el.dataset.nqCampo] = el.value; });
+    on("[data-nq-campo=duracion]", "change", () => render());
+    on("[data-nq-item]", "input", (el) => { formNq(el).items[el.dataset.nqItem].texto = el.value; });
+    // Enter en un ítem agrega otro abajo (como en cualquier lista del celular)
+    on("[data-nq-item]", "keydown", (el, e) => {
+        if (e.key !== "Enter") return;
+        e.preventDefault();
+        agregarItemForm(el.closest("[data-nq-form]").dataset.nqForm, Number(el.dataset.nqItem) + 1);
+    });
+    on("[data-nq-agregar-item]", "click", (el) => agregarItemForm(el.closest("[data-nq-form]").dataset.nqForm));
+    on("[data-nq-quitar-item]", "click", (el) => { formNq(el).items.splice(Number(el.dataset.nqQuitarItem), 1); render(); });
+    on("#form-nota-equipo", "submit", (el, e) => { e.preventDefault(); agregarNotaEquipo(); });
+    on("#form-editar-nota-equipo", "submit", (el, e) => { e.preventDefault(); guardarEdicionNotaEquipo(); });
+    on("[data-nq-editar]", "click", (el) => editarNotaEquipo(el.dataset.nqEditar));
+    on("[data-nq-cancelar]", "click", () => { estado.edicionNotaEquipo = null; render(); });
+    on("[data-nq-borrar]", "click", (el) => borrarNotaEquipo(el.dataset.nqBorrar));
+    on("[data-nq-tildar]", "click", (el) => tildarItem(el.dataset.nqTildar, el.dataset.item));
 }
 
 // ---------- Acciones sobre tareas ----------
@@ -686,6 +711,7 @@ function vistaHoy() {
         ${grupo("Hechas", hechas)}
     </section>
     ${avisoPedidosHoy(hoy)}
+    ${notasEquipoHoy()}
     <button class="boton boton--suave boton--grande" data-ir="turno">🔄 Dejar nota de turno</button>`;
 }
 
@@ -1928,14 +1954,249 @@ async function borrarPedido(id) {
     aviso("Pedido borrado");
 }
 
+// ---------- Vista: Notas del equipo ----------
+// Notas compartidas: todas las ven, escriben, editan y borran. Dos modos:
+//  - "texto": título (opcional) y texto libre.
+//  - "lista": título, descripción (opcional) e ítems que cualquiera va tildando.
+// Cada nota tiene un tiempo de desaparición: pasado ese tiempo ya no se muestra (ni en Notas ni en Hoy).
+// "Hasta que yo la quite" no vence y solo la puede borrar (o cambiarle el tiempo) quien la escribió.
+
+const MAX_ITEMS = 100;
+// [id, texto, días]
+const DURACIONES = [["1d", "1 día", 1], ["3d", "3 días", 3], ["1s", "1 semana", 7], ["1m", "1 mes", 30], ["fija", "Hasta que yo la quite", 0]];
+const itemVacio = () => ({ id: Math.random().toString(36).slice(2, 8), texto: "", hecho: false, hechoPor: "" });
+const formNotaVacio = (tipo = "texto") => ({ tipo, titulo: "", texto: "", descripcion: "", duracion: "1s", items: [itemVacio()] });
+const formularioNota = (cual) => (cual === "edicion" ? estado.edicionNotaEquipo : estado.formNotaEquipo);
+const buscarNotaEquipo = (id) => estado.notasEquipo.find((n) => n.id === id);
+// Quien la escribió (las chicas comparten cuenta: se compara también el nombre).
+const esCreadora = (n) => !n.persona || (n.persona === estado.persona && (!n.uidCreadora || n.uidCreadora === datos.uidActual()));
+const venceEn = (duracion) => {
+    const dias = DURACIONES.find(([id]) => id === duracion)?.[2];
+    return dias ? new Date(cal.ahora().getTime() + dias * 86400000).toISOString() : "";
+};
+const notasVigentes = () => estado.notasEquipo
+    .filter((n) => !n.vence || n.vence > cal.ahora().toISOString())
+    .sort((a, b) => (b.creado || "").localeCompare(a.creado || ""));
+const cuandoLargo = (isoStr) => `${cal.fechaLarga(new Date(isoStr))} a las ${hora(isoStr)}`;
+
+// Campos del formulario (nueva nota o edición): selector de modo, título y texto o ítems.
+function camposNota(f, cual) {
+    const modos = [["texto", "📝 Texto"], ["lista", "✅ Lista"]];
+    return `
+    <div class="filtros" role="group" aria-label="Tipo de nota">
+        ${modos.map(([id, txt]) => `<button type="button" class="filtros__item ${f.tipo === id ? "is-activo" : ""}" data-nq-tipo="${id}" aria-pressed="${f.tipo === id}">${txt}</button>`).join("")}
+    </div>
+    <label><span>Título ${f.tipo === "texto" ? "<small>(opcional)</small>" : ""}</span>
+        <input data-nq-campo="titulo" data-foco="nq-${cual}-titulo" maxlength="120" value="${esc(f.titulo)}"
+            placeholder="${f.tipo === "lista" ? "Ej: Cosas para reponer" : "Ej: Horario del feriado"}">
+    </label>
+    ${cual === "nueva" || esCreadora(f) ? `
+    <label>⏳ ¿Cuándo desaparece?
+        <select data-nq-campo="duracion">
+            ${DURACIONES.map(([id, txt]) => `<option value="${id}" ${f.duracion === id ? "selected" : ""}>${id === "fija" ? "📌 " : ""}${txt}</option>`).join("")}
+        </select>
+        ${f.duracion === "fija" ? `<small>Nadie más la puede borrar: queda hasta que vos la quites.</small>` : ""}
+    </label>` : ""}
+    ${f.tipo === "texto" ? `
+    <label>Nota
+        <textarea data-nq-campo="texto" data-foco="nq-${cual}-texto" rows="5" maxlength="3000"
+            placeholder="Escribí lo que quieras compartir con el equipo…">${esc(f.texto)}</textarea>
+    </label>` : `
+    <label><span>Descripción <small>(opcional)</small></span>
+        <textarea data-nq-campo="descripcion" data-foco="nq-${cual}-descripcion" rows="2" maxlength="500"
+            placeholder="Para qué es la lista, hasta cuándo…">${esc(f.descripcion)}</textarea>
+    </label>
+    <div class="nq-items">
+        <span class="nq-items__titulo">Ítems</span>
+        ${f.items.map((it, i) => `
+        <div class="nq-items__fila">
+            <span class="nq-items__punto" aria-hidden="true"></span>
+            <input data-nq-item="${i}" data-foco="nq-${cual}-item-${i}" maxlength="200" value="${esc(it.texto)}"
+                placeholder="Ítem ${i + 1}" aria-label="Ítem ${i + 1}" enterkeyhint="next">
+            <button type="button" class="nq-items__quitar" data-nq-quitar-item="${i}" aria-label="Quitar ítem ${i + 1}"><i class="ti ti-x" aria-hidden="true"></i></button>
+        </div>`).join("")}
+        ${f.items.length < MAX_ITEMS ? `<button type="button" class="boton boton--suave boton--chico" data-nq-agregar-item>➕ Agregar ítem</button>` : ""}
+    </div>`}`;
+}
+
+// Cuándo desaparece la nota (o que queda hasta que la quite quien la escribió).
+function venceTexto(n) {
+    if (n.duracion === "fija") return `📌 Queda hasta que ${esCreadora(n) ? "vos la quites" : `${esc(nombre(n.persona))} la quite`}`;
+    return n.vence ? `⏳ Desaparece el ${cuandoLargo(n.vence)}` : "";
+}
+
+// resumen: versión para "Hoy" (sin editar ni borrar).
+function tarjetaNotaEquipo(n, { resumen = false } = {}) {
+    if (!resumen && estado.edicionNotaEquipo?.id === n.id) {
+        return `
+        <article class="nota nota--equipo">
+            <form class="formulario formulario--compacto" id="form-editar-nota-equipo" data-nq-form="edicion">
+                ${camposNota(estado.edicionNotaEquipo, "edicion")}
+                <div class="tarea__botones">
+                    <button class="boton" type="submit">Guardar</button>
+                    <button class="boton boton--suave" type="button" data-nq-cancelar>Cancelar</button>
+                </div>
+            </form>
+        </article>`;
+    }
+    const items = n.items || [];
+    const hechos = items.filter((it) => it.hecho).length;
+    const completa = items.length && hechos === items.length;
+    const cuerpo = n.tipo === "lista" ? `
+        ${n.descripcion ? `<p class="nota__texto nq-descripcion">${esc(n.descripcion)}</p>` : ""}
+        <ul class="nq-lista">
+            ${items.map((it) => `
+            <li>
+                <button class="nq-lista__item ${it.hecho ? "is-hecho" : ""}" data-nq-tildar="${n.id}" data-item="${it.id}" aria-pressed="${!!it.hecho}">
+                    <span class="check ${it.hecho ? "is-ok" : ""}" aria-hidden="true">${it.hecho ? `<i class="ti ti-check"></i>` : ""}</span>
+                    <span class="nq-lista__texto">${esc(it.texto)}</span>
+                    ${it.hecho && it.hechoPor ? `<small class="nq-lista__quien">${esc(nombre(it.hechoPor))}</small>` : ""}
+                </button>
+            </li>`).join("")}
+        </ul>` : `<p class="nota__texto">${esc(n.texto)}</p>`;
+
+    return `
+    <article class="nota nota--equipo ${completa ? "is-completa" : ""}">
+        ${n.titulo || n.tipo === "lista" ? `
+        <header class="nq-cabecera">
+            <h3 class="nq-cabecera__titulo">${n.tipo === "lista" ? "✅" : "📝"} ${esc(n.titulo)}</h3>
+            ${n.tipo === "lista" ? `<span class="nq-cabecera__progreso">${hechos}/${items.length}</span>` : ""}
+        </header>` : ""}
+        ${cuerpo}
+        <p class="nota__meta">✍️ ${esc(nombre(n.persona))} · ${cuandoLargo(n.creado)}${n.editada ? ` · editada por ${esc(nombre(n.editadaPor))}` : ""}</p>
+        ${resumen ? "" : `
+        <div class="nq-pie">
+            <span class="nq-pie__vence">${venceTexto(n)}</span>
+            <div class="nota__acciones">
+                <button class="nota__borrar" data-nq-editar="${n.id}">Editar</button>
+                ${n.duracion !== "fija" || esCreadora(n) ? `<button class="nota__borrar" data-nq-borrar="${n.id}">Borrar</button>` : ""}
+            </div>
+        </div>`}
+    </article>`;
+}
+
+// "Hoy" de las chicas: las notas vigentes, abajo de todo.
+function notasEquipoHoy() {
+    const lista = notasVigentes();
+    if (!lista.length) return "";
+    return `
+    <section class="momento">
+        <h2 class="momento__titulo">🗒️ Notas del equipo</h2>
+        ${lista.map((n) => tarjetaNotaEquipo(n, { resumen: true })).join("")}
+        <button class="boton boton--suave" data-ir="notas">Ver o escribir notas</button>
+    </section>`;
+}
+
+function vistaNotasEquipo() {
+    if (!estado.formNotaEquipo) estado.formNotaEquipo = formNotaVacio();
+    const lista = notasVigentes();
+    return `
+    <section class="encabezado">
+        <h1>🗒️ Notas</h1>
+        <p>Notas para todo el equipo: todas las pueden ver, editar y borrar. Escribí un texto o armá una lista para ir tildando. También aparecen abajo en "Hoy".</p>
+    </section>
+    <form class="formulario" id="form-nota-equipo" data-nq-form="nueva">
+        <h2>➕ Nueva nota</h2>
+        ${camposNota(estado.formNotaEquipo, "nueva")}
+        <button class="boton boton--grande" type="submit">Guardar nota</button>
+    </form>
+    <section class="bloque">
+        <h2 class="bloque__titulo">Notas del equipo · ${lista.length}</h2>
+        ${lista.length ? lista.map(tarjetaNotaEquipo).join("") : `<p class="vacio">Todavía no hay notas. ¡Escribí la primera!</p>`}
+    </section>`;
+}
+
+// Agrega un ítem vacío en la posición (o al final) y pone el cursor ahí.
+function agregarItemForm(cual, pos) {
+    const f = formularioNota(cual);
+    if (f.items.length >= MAX_ITEMS) return aviso(`Una lista puede tener hasta ${MAX_ITEMS} ítems`);
+    const i = pos ?? f.items.length;
+    f.items.splice(i, 0, itemVacio());
+    render();
+    $app.querySelector(`[data-foco="nq-${cual}-item-${i}"]`)?.focus();
+}
+
+// Arma la nota a guardar a partir del formulario; null si falta algo. Los ítems vacíos se descartan.
+function leerFormNota(f) {
+    const base = { tipo: f.tipo, titulo: f.titulo.trim(), texto: "", descripcion: "", items: [], duracion: f.duracion, vence: venceEn(f.duracion) };
+    if (f.tipo === "texto") {
+        const texto = f.texto.trim();
+        if (!texto) return aviso("Escribí la nota"), null;
+        return { ...base, texto };
+    }
+    const items = f.items.map((it) => ({ ...it, texto: it.texto.trim() })).filter((it) => it.texto);
+    if (!base.titulo) return aviso("Ponele un título a la lista"), null;
+    if (!items.length) return aviso("Agregá al menos un ítem"), null;
+    return { ...base, descripcion: f.descripcion.trim(), items };
+}
+
+// Guarda la nota completa con los cambios (el documento se reemplaza entero).
+async function guardarNotaEquipo(n, cambios) {
+    const { uid, ...resto } = n;
+    await datos.guardarEn("notasEquipo", { ...resto, ...cambios });
+}
+
+async function agregarNotaEquipo() {
+    const nueva = leerFormNota(estado.formNotaEquipo);
+    if (!nueva) return;
+    await datos.guardarEn("notasEquipo", {
+        id: nuevoId("nota"), ...nueva, persona: estado.persona, uidCreadora: datos.uidActual(),
+        creado: cal.ahora().toISOString(), editada: "", editadaPor: ""
+    });
+    estado.formNotaEquipo = formNotaVacio(nueva.tipo);
+    aviso("Nota guardada ✓ La ve todo el equipo", "ok");
+    render();
+}
+
+function editarNotaEquipo(id) {
+    const n = buscarNotaEquipo(id);
+    if (!n) return;
+    const items = (n.items || []).map((it) => ({ ...it }));
+    estado.edicionNotaEquipo = { ...formNotaVacio(n.tipo), ...n, duracion: n.duracion || "1s", items: items.length ? items : [itemVacio()] };
+    render();
+}
+
+async function guardarEdicionNotaEquipo() {
+    const n = buscarNotaEquipo(estado.edicionNotaEquipo.id);
+    if (!n) {
+        estado.edicionNotaEquipo = null;
+        render();
+        return aviso("Esa nota ya la borró otra persona");
+    }
+    const cambios = leerFormNota(estado.edicionNotaEquipo);
+    if (!cambios) return;
+    // El tiempo de desaparición lo cambia solo quien la escribió; si no lo cambió, sigue venciendo cuando estaba.
+    if (!esCreadora(n) || cambios.duracion === n.duracion) Object.assign(cambios, { duracion: n.duracion, vence: n.vence });
+    await guardarNotaEquipo(n, { ...cambios, editada: cal.ahora().toISOString(), editadaPor: estado.persona });
+    estado.edicionNotaEquipo = null;
+    aviso("Nota actualizada ✓", "ok");
+    render();
+}
+
+async function tildarItem(id, itemId) {
+    const n = buscarNotaEquipo(id);
+    if (!n) return;
+    const items = n.items.map((it) => (it.id !== itemId ? it : { ...it, hecho: !it.hecho, hechoPor: it.hecho ? "" : estado.persona }));
+    await guardarNotaEquipo(n, { items });
+}
+
+async function borrarNotaEquipo(id) {
+    const n = buscarNotaEquipo(id);
+    if (n?.duracion === "fija" && !esCreadora(n)) return aviso(`Esta nota la puede quitar solo ${nombre(n.persona)}`);
+    if (!n || !confirm(`¿Borrar la nota${n.titulo ? ` "${n.titulo}"` : ""}? Se borra para todo el equipo.`)) return;
+    await datos.borrarDe("notasEquipo", id);
+    if (estado.edicionNotaEquipo?.id === id) estado.edicionNotaEquipo = null;
+    aviso("Nota borrada");
+}
+
 // ---------- Vista: Bloc de notas (Agustina) ----------
 
 function vistaNotas() {
     const lista = [...estado.notasDuena].sort(masNuevoPrimero);
     return `
     <section class="encabezado">
-        <h1>Mis notas</h1>
-        <p>Tu bloc de notas. Solo lo ves vos.</p>
+        <h1>🔒 Mi bloc privado</h1>
+        <p>Tu bloc de notas. Solo lo ves vos. Para escribirle algo al equipo, usá <strong>Notas</strong>.</p>
     </section>
     <form class="formulario" id="form-notas">
         <label>Nueva nota

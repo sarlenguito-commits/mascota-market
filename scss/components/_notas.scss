@@ -83,3 +83,155 @@
         }
     }
 }
+
+// ---------- Notas del equipo (texto o lista) ----------
+
+.nota--equipo {
+    border-left-color: $color-primario;
+
+    // Lista con todos los ítems tildados
+    &.is-completa {
+        border-left-color: $color-ok;
+    }
+
+    .formulario--compacto {
+        margin: 0;
+        padding: 0;
+        background: none;
+    }
+}
+
+.nq-cabecera {
+    @include flex(row, space-between, flex-start, 10px);
+
+    &__titulo {
+        color: $color-primario-oscuro;
+        font-size: 1.05rem;
+        overflow-wrap: anywhere;
+    }
+
+    &__progreso {
+        @include colores($color-primario-suave, $color-primario-oscuro);
+        flex: none;
+        padding: 2px 10px;
+        border-radius: $radio-pildora;
+        font-size: 0.8rem;
+        font-weight: 800;
+
+        .is-completa & {
+            @include colores($color-ok-fondo, $color-ok);
+        }
+    }
+}
+
+// Pie de la tarjeta: cuándo desaparece a la izquierda, botones a la derecha.
+.nq-pie {
+    @include flex(row, space-between, center, 8px);
+    flex-wrap: wrap;
+
+    &__vence {
+        @extend %texto-suave;
+        font-size: 0.8rem;
+    }
+
+    .nota__acciones {
+        margin-left: auto;
+    }
+}
+
+.nq-descripcion {
+    @extend %texto-suave;
+}
+
+// Lista para tildar: todo el renglón es el botón, así es fácil de tocar en el celular.
+.nq-lista {
+    @include flex(column, $gap: 2px);
+    list-style: none;
+
+    &__item {
+        @include flex(row, $align: center, $gap: 10px);
+        width: 100%;
+        padding: 6px 4px;
+        border: none;
+        border-radius: $radio-medio;
+        background: none;
+        color: $color-texto;
+        font: inherit;
+        text-align: left;
+        cursor: pointer;
+
+        &:hover {
+            background-color: $color-primario-suave;
+        }
+
+        .check {
+            width: 24px;
+            height: 24px;
+            font-size: 0.9rem;
+        }
+
+        &.is-hecho {
+            .nq-lista__texto {
+                color: $color-texto-suave;
+                text-decoration: line-through;
+            }
+        }
+    }
+
+    &__texto {
+        flex: 1;
+        overflow-wrap: anywhere;
+    }
+
+    &__quien {
+        @extend %texto-suave;
+        flex: none;
+        font-size: 0.75rem;
+    }
+}
+
+// Ítems en el formulario
+.nq-items {
+    @include flex(column, $gap: 8px);
+
+    &__titulo {
+        font-weight: 700;
+    }
+
+    &__fila {
+        @include flex(row, $align: center, $gap: 8px);
+
+        input {
+            flex: 1;
+            min-width: 0;
+        }
+    }
+
+    &__punto {
+        flex: none;
+        width: 16px;
+        height: 16px;
+        border: 2px solid $color-primario-claro;
+        border-radius: 50%;
+    }
+
+    &__quitar {
+        @include flex(row, center, center);
+        flex: none;
+        width: 34px;
+        height: 34px;
+        border: 1px solid $color-borde;
+        border-radius: 50%;
+        background: none;
+        color: $color-texto-suave;
+        cursor: pointer;
+
+        &:hover {
+            @include colores($color-atrasada-fondo, $color-atrasada);
+        }
+    }
+
+    .boton--chico {
+        align-self: flex-start;
+    }
+}

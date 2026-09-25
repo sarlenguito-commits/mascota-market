@@ -251,9 +251,10 @@ export async function borrarTareaExtra(id) {
 // "notasDuena"  → bloc de notas privado de Agustina
 // "pedidosClientes" → pedidos que hacen los clientes en el local (todas cargan y modifican)
 // "pedidosDia"  → lo que Agustina cambió de los pedidos de un día (id = fecha); si no hay, vale el calendario fijo
+// "notasEquipo" → notas compartidas (texto o lista con ítems): todas las escriben, editan y borran
 // Mismo manejo en los dos modos: en prueba se guardan en localStorage (mm-demo-<coleccion>).
 
-export const COLECCIONES = ["notasTurno", "agenda", "notasDuena", "pedidosClientes", "pedidosDia"];
+export const COLECCIONES = ["notasTurno", "agenda", "notasDuena", "pedidosClientes", "pedidosDia", "notasEquipo"];
 const claveDemo = (col) => `mm-demo-${col}`;
 const leerColDemo = (col) => {
     try { return JSON.parse(localStorage.getItem(claveDemo(col))) || {}; } catch { return {}; }

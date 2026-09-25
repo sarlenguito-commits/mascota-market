@@ -103,6 +103,44 @@ service cloud.firestore {
         && request.resource.data.nota is string && request.resource.data.nota.size() <= 300;
     }
 
+    function notaEquipoValida() {
+      return request.resource.data.tipo in ['texto', 'lista']
+        && request.resource.data.titulo is string && request.resource.data.titulo.size() <= 120
+        && request.resource.data.texto is string && request.resource.data.texto.size() <= 3000
+        && request.resource.data.descripcion is string && request.resource.data.descripcion.size() <= 500
+        && request.resource.data.items is list && request.resource.data.items.size() <= 100
+        && request.resource.data.creado is string
+        && request.resource.data.editada is string
+        && request.resource.data.editadaPor in ['', 'ailin', 'sharon', 'sofia', 'agustina']
+        && request.resource.data.duracion in ['1d', '3d', '1s', '1m', 'fija']
+        && request.resource.data.vence is string;
+    }
+
+    // Quien escribió la nota: Agustina con su cuenta; las chicas, con la cuenta del equipo desde la que se creó.
+    function esCreadoraDe(nota) {
+      return (nota.persona == 'agustina' && esAgustina())
+        || (nota.persona != 'agustina' && logueada() && nota.uidCreadora == request.auth.uid);
+    }
+
+    // Notas del equipo (texto o lista): todas las ven, escriben, editan, tildan y borran.
+    // Las de "hasta que yo la quite" (duracion 'fija') solo las borra quien las escribió,
+    // y el tiempo de desaparición solo lo cambia ella.
+    match /notasEquipo/{id} {
+      allow read: if esDelEquipo();
+      allow delete: if esDelEquipo() && (resource.data.duracion != 'fija' || esCreadoraDe(resource.data));
+      allow create: if esDelEquipo() && notaEquipoValida()
+        && request.resource.data.uidCreadora == request.auth.uid
+        && request.resource.data.persona in ['ailin', 'sharon', 'sofia', 'agustina']
+        && (request.resource.data.persona != 'agustina' || esAgustina());
+      // Al editar no cambia quién la escribió ni cuándo.
+      allow update: if esDelEquipo() && notaEquipoValida()
+        && request.resource.data.persona == resource.data.persona
+        && request.resource.data.uidCreadora == resource.data.uidCreadora
+        && request.resource.data.creado == resource.data.creado
+        && (esCreadoraDe(resource.data)
+          || (request.resource.data.duracion == resource.data.duracion && request.resource.data.vence == resource.data.vence));
+    }
+
     // Bloc de notas de Agustina: privado, nadie más lo puede leer.
     match /notasDuena/{id} {
       allow read, write: if esAgustina();
