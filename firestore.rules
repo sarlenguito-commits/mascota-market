@@ -141,6 +141,27 @@ service cloud.firestore {
           || (request.resource.data.duracion == resource.data.duracion && request.resource.data.vence == resource.data.vence));
     }
 
+    // Recordatorios: "persona" = para quién es (una de las chicas; le aparece en su Hoy), "autora" = quién lo anotó.
+    // Todas los ven, anotan, editan y borran (que lo editen solo la autora y la destinataria lo controla la app).
+    // Nadie puede anotar a nombre de Agustina si no es ella, ni cambiar quién lo anotó o cuándo.
+    match /recordatorios/{id} {
+      allow read, delete: if esDelEquipo();
+      allow create, update: if esDelEquipo()
+        && request.resource.data.persona in ['ailin', 'sharon', 'sofia']
+        && request.resource.data.autora in ['ailin', 'sharon', 'sofia', 'agustina']
+        // Al crear: la autora es quien está logueada. Al editar: no cambian la autora ni la fecha de creación.
+        && ((resource == null && (request.resource.data.autora == 'agustina') == esAgustina())
+          || (resource != null && request.resource.data.autora == resource.data.autora
+              && request.resource.data.creado == resource.data.creado))
+        && request.resource.data.texto is string
+        && request.resource.data.texto.size() > 0 && request.resource.data.texto.size() <= 1000
+        && request.resource.data.duracion in ['sin', '1d', '3d', '1s', '1m', 'fecha']
+        && request.resource.data.fecha is string && request.resource.data.fecha.size() <= 10
+        && request.resource.data.vence is string
+        && request.resource.data.creado is string
+        && request.resource.data.editado is string;
+    }
+
     // Bloc de notas de Agustina: privado, nadie más lo puede leer.
     match /notasDuena/{id} {
       allow read, write: if esAgustina();

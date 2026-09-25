@@ -235,3 +235,20 @@
         align-self: flex-start;
     }
 }
+
+// ---------- Recordatorios (cada uno dice de quién es) ----------
+
+.nota--recordatorio {
+    border-left-color: $color-pospuesta;
+
+    // Los propios, resaltados
+    &.is-mio {
+        background-color: $color-pospuesta-fondo;
+    }
+
+    .formulario--compacto {
+        margin: 0;
+        padding: 0;
+        background: none;
+    }
+}

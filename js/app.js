@@ -43,6 +43,9 @@ const estado = {
     notasEquipo: [],          // notas compartidas: todas las ven, escriben, editan y borran
     formNotaEquipo: null,     // nota nueva (modo texto o lista)
     edicionNotaEquipo: null,  // nota que se está editando (mismos campos + id)
+    recordatorios: [],        // recordatorios para cada chica (todas los ven; a cada una le aparecen los suyos en Hoy)
+    formRecordatorio: null,   // recordatorio nuevo
+    edicionRecordatorio: null, // recordatorio que se está editando (mismos campos + id)
     escuchando: false
 };
 
@@ -86,6 +89,7 @@ const iniciar = () => datos.escucharSesion((persona) => {
         datos.escucharColeccion("pedidosClientes", (lista) => { estado.pedidosClientes = lista; render(); });
         datos.escucharColeccion("pedidosDia", (lista) => { estado.pedidosDia = lista; render(); });
         datos.escucharColeccion("notasEquipo", (lista) => { estado.notasEquipo = lista; render(); });
+        datos.escucharColeccion("recordatorios", (lista) => { estado.recordatorios = lista; render(); });
         // El bloc de notas es privado: solo Agustina lo lee.
         if (PERSONAS[persona]?.rol === "duena") {
             datos.escucharColeccion("notasDuena", (lista) => { estado.notasDuena = lista; render(); });
@@ -254,11 +258,12 @@ function alternarTema() {
 // ---------- Navegación (barra de abajo en el celular) ----------
 
 // [vista, ícono (Tabler), texto]
-const NAV_EMPLEADA = [["hoy", "sun", "Hoy"], ["turno", "arrows-exchange", "Turno"], ["calendario", "calendar", "Calendario"], ["glosario", "book", "Glosario"], ["locales", "building-store", "Locales"], ["pedidos", "truck", "Pedidos"], ["notas", "notes", "Notas"]];
+// "Recorda­torios" lleva un guion opcional: si no entra, se parte en dos renglones.
+const NAV_EMPLEADA = [["hoy", "sun", "Hoy"], ["turno", "arrows-exchange", "Turno"], ["calendario", "calendar", "Calendario"], ["pedidos", "truck", "Pedidos"], ["notas", "notes", "Notas"], ["recordatorios", "bell", "Recorda­torios"], ["mas", "dots", "Más"]];
 const NAV_DUENA = [["actividad", "activity", "Actividad"], ["tareas", "clipboard-plus", "Tareas"], ["calendario", "calendar", "Calendario"], ["notas", "notes", "Notas"], ["mas", "dots", "Más"]];
-const MAS_DUENA = [["informes", "chart-bar", "Informes"], ["turno", "arrows-exchange", "Cambio de turno"], ["locales", "building-store", "Locales"], ["glosario", "book", "Glosario"], ["pedidos", "truck", "Pedidos"], ["historialPedidos", "archive", "Pedidos entregados"], ["bloc", "lock", "Mi bloc privado"]];
-// El menú "Más" es solo de Agustina (las chicas tienen todo en la barra).
-const menuMas = () => (esDuena() ? MAS_DUENA : []);
+const MAS_DUENA = [["informes", "chart-bar", "Informes"], ["turno", "arrows-exchange", "Cambio de turno"], ["locales", "building-store", "Locales"], ["glosario", "book", "Glosario"], ["pedidos", "truck", "Pedidos"], ["historialPedidos", "archive", "Pedidos entregados"], ["recordatorios", "bell", "Recordatorios"], ["bloc", "lock", "Mi bloc privado"]];
+const MAS_EMPLEADA = [["glosario", "book", "Glosario"], ["locales", "building-store", "Locales"]];
+const menuMas = () => (esDuena() ? MAS_DUENA : MAS_EMPLEADA);
 
 function irA(vista) {
     estado.vista = vista;
@@ -278,7 +283,8 @@ function render() {
     const vistas = {
         hoy: vistaHoy, turno: vistaTurno, calendario: vistaCalendario, locales: vistaLocales,
         informes: vistaInformes, tareas: vistaTareas, notas: vistaNotasEquipo, bloc: vistaNotas, glosario: vistaGlosario,
-        actividad: vistaActividad, mas: vistaMas, pedidos: vistaPedidos, historialPedidos: vistaHistorialPedidos
+        actividad: vistaActividad, mas: vistaMas, pedidos: vistaPedidos, historialPedidos: vistaHistorialPedidos,
+        recordatorios: vistaRecordatorios
     };
     const contenido = (vistas[estado.vista] || vistaHoy)();
 
@@ -435,6 +441,17 @@ function conectarEventos() {
     on("[data-nq-cancelar]", "click", () => { estado.edicionNotaEquipo = null; render(); });
     on("[data-nq-borrar]", "click", (el) => borrarNotaEquipo(el.dataset.nqBorrar));
     on("[data-nq-tildar]", "click", (el) => tildarItem(el.dataset.nqTildar, el.dataset.item));
+
+    // Recordatorios (data-rec-form = "nuevo" | "edicion")
+    const formRec = (el) => formularioRec(el.closest("[data-rec-form]").dataset.recForm);
+    on("[data-rec-campo]", "input", (el) => { formRec(el)[el.dataset.recCampo] = el.value; });
+    on("[data-rec-campo=duracion]", "change", (el) => { formRec(el).duracion = el.value; render(); });
+    on("[data-rec-campo=fecha]", "change", (el) => { formRec(el).fecha = el.value; });
+    on("#form-recordatorio", "submit", (el, e) => { e.preventDefault(); agregarRecordatorio(); });
+    on("#form-editar-recordatorio", "submit", (el, e) => { e.preventDefault(); guardarEdicionRecordatorio(); });
+    on("[data-rec-editar]", "click", (el) => editarRecordatorio(el.dataset.recEditar));
+    on("[data-rec-cancelar]", "click", () => { estado.edicionRecordatorio = null; render(); });
+    on("[data-rec-borrar]", "click", (el) => borrarRecordatorio(el.dataset.recBorrar));
 }
 
 // ---------- Acciones sobre tareas ----------
@@ -711,6 +728,7 @@ function vistaHoy() {
         ${grupo("Hechas", hechas)}
     </section>
     ${avisoPedidosHoy(hoy)}
+    ${recordatoriosHoy()}
     ${notasEquipoHoy()}
     <button class="boton boton--suave boton--grande" data-ir="turno">🔄 Dejar nota de turno</button>`;
 }
@@ -2187,6 +2205,167 @@ async function borrarNotaEquipo(id) {
     await datos.borrarDe("notasEquipo", id);
     if (estado.edicionNotaEquipo?.id === id) estado.edicionNotaEquipo = null;
     aviso("Nota borrada");
+}
+
+// ---------- Vista: Recordatorios ----------
+// Al anotar uno se elige para quién es ("Recordatorio de: Sharon") y le aparece en su Hoy.
+// Todas los ven. Los editan o borran quien lo anotó y la chica a la que es.
+// Duran un tiempo (1 día … 1 mes, o hasta una fecha) o no vencen nunca. Los vencidos dejan de mostrarse.
+
+// [id, texto]. Los tiempos fijos usan los mismos días que las notas del equipo (venceEn).
+const DURACIONES_REC = [["sin", "♾️ Sin límite (hasta que lo borre)"], ["1d", "1 día"], ["3d", "3 días"], ["1s", "1 semana"], ["1m", "1 mes"], ["fecha", "📅 Hasta una fecha…"]];
+// Por defecto, para quien lo está escribiendo (Agustina no tiene "Hoy": elige a una de las chicas).
+const formRecordatorioVacio = () => ({ texto: "", duracion: "sin", fecha: "", persona: esDuena() ? empleadas()[0] : estado.persona });
+const formularioRec = (cual) => (cual === "edicion" ? estado.edicionRecordatorio : estado.formRecordatorio);
+const buscarRecordatorio = (id) => estado.recordatorios.find((r) => r.id === id);
+// Con fecha elegida vence al terminar ese día.
+const venceRecordatorio = (f) => (f.duracion === "fecha" ? new Date(`${f.fecha}T23:59:59`).toISOString() : venceEn(f.duracion));
+const recordatoriosVigentes = () => estado.recordatorios
+    .filter((r) => !r.vence || r.vence > cal.ahora().toISOString())
+    .sort((a, b) => (b.creado || "").localeCompare(a.creado || ""));
+const esParaMi = (r) => r.persona === estado.persona;
+const puedeEditarRecordatorio = (r) => esParaMi(r) || r.autora === estado.persona;
+
+function camposRecordatorio(f, cual) {
+    return `
+    <label>¿Para quién es?
+        <select data-rec-campo="persona">
+            ${empleadas().map((id) => `<option value="${id}" ${f.persona === id ? "selected" : ""}>${esc(nombre(id))}${id === estado.persona ? " (vos)" : ""}</option>`).join("")}
+        </select>
+    </label>
+    <label>¿Qué hay que recordar?
+        <textarea data-rec-campo="texto" data-foco="rec-${cual}-texto" rows="3" maxlength="1000"
+            placeholder="Ej: pedir el franco del sábado, llevar el cargador…">${esc(f.texto)}</textarea>
+    </label>
+    <label>⏳ ¿Por cuánto tiempo?
+        <select data-rec-campo="duracion">
+            ${DURACIONES_REC.map(([id, txt]) => `<option value="${id}" ${f.duracion === id ? "selected" : ""}>${txt}</option>`).join("")}
+        </select>
+    </label>
+    ${f.duracion === "fecha" ? `
+    <label>Hasta el día
+        <input type="date" data-rec-campo="fecha" value="${esc(f.fecha)}" min="${cal.iso(cal.ahora())}">
+    </label>` : ""}`;
+}
+
+function venceRecordatorioTexto(r) {
+    if (r.duracion === "fecha" && r.fecha) return `📅 Hasta el ${cal.fechaLarga(cal.desdeIso(r.fecha))}`;
+    return r.vence ? `⏳ Desaparece el ${cuandoLargo(r.vence)}` : "♾️ Sin límite: queda hasta que lo borren";
+}
+
+// resumen: versión para "Hoy" (sin editar ni borrar).
+function tarjetaRecordatorio(r, { resumen = false } = {}) {
+    if (!resumen && estado.edicionRecordatorio?.id === r.id) {
+        return `
+        <article class="nota nota--recordatorio">
+            <form class="formulario formulario--compacto" id="form-editar-recordatorio" data-rec-form="edicion">
+                ${camposRecordatorio(estado.edicionRecordatorio, "edicion")}
+                <div class="tarea__botones">
+                    <button class="boton" type="submit">Guardar</button>
+                    <button class="boton boton--suave" type="button" data-rec-cancelar>Cancelar</button>
+                </div>
+            </form>
+        </article>`;
+    }
+    return `
+    <article class="nota nota--recordatorio ${esParaMi(r) ? "is-mio" : ""}">
+        <p class="nq-cabecera__titulo">🔔 Recordatorio de: ${esc(nombre(r.persona))}</p>
+        <p class="nota__texto">${esc(r.texto)}</p>
+        <p class="nota__meta">✍️ Anotado por ${esc(nombre(r.autora))} el ${cuandoLargo(r.creado)}${r.editado ? " · editado" : ""}</p>
+        <div class="nq-pie">
+            <span class="nq-pie__vence">${venceRecordatorioTexto(r)}</span>
+            ${!resumen && puedeEditarRecordatorio(r) ? `
+            <div class="nota__acciones">
+                <button class="nota__borrar" data-rec-editar="${r.id}">Editar</button>
+                <button class="nota__borrar" data-rec-borrar="${r.id}">Borrar</button>
+            </div>` : ""}
+        </div>
+    </article>`;
+}
+
+// "Hoy": los recordatorios que son para esta chica y siguen vigentes.
+function recordatoriosHoy() {
+    const mios = recordatoriosVigentes().filter(esParaMi);
+    if (!mios.length) return "";
+    return `
+    <section class="momento">
+        <h2 class="momento__titulo">🔔 Tus recordatorios</h2>
+        ${mios.map((r) => tarjetaRecordatorio(r, { resumen: true })).join("")}
+        <button class="boton boton--suave" data-ir="recordatorios">Ver o anotar recordatorios</button>
+    </section>`;
+}
+
+function vistaRecordatorios() {
+    if (!estado.formRecordatorio) estado.formRecordatorio = formRecordatorioVacio();
+    const lista = recordatoriosVigentes();
+    return `
+    <section class="encabezado">
+        <h1>🔔 Recordatorios</h1>
+        <p>Elegí para quién es: le aparece en su "Hoy". Todas los ven, y los pueden editar o borrar quien lo anotó y la chica a la que es.</p>
+    </section>
+    <form class="formulario" id="form-recordatorio" data-rec-form="nuevo">
+        <h2>➕ Nuevo recordatorio</h2>
+        ${camposRecordatorio(estado.formRecordatorio, "nuevo")}
+        <button class="boton boton--grande" type="submit">Guardar recordatorio</button>
+    </form>
+    <section class="bloque">
+        <h2 class="bloque__titulo">Recordatorios · ${lista.length}</h2>
+        ${lista.length ? lista.map((r) => tarjetaRecordatorio(r)).join("") : `<p class="vacio">No hay recordatorios. Anotá el primero arriba.</p>`}
+    </section>`;
+}
+
+// Arma el recordatorio a guardar a partir del formulario; null si falta algo.
+function leerFormRecordatorio(f) {
+    const texto = f.texto.trim();
+    if (!texto) return aviso("Escribí el recordatorio"), null;
+    if (f.duracion === "fecha" && !f.fecha) return aviso("Elegí hasta qué día"), null;
+    if (f.duracion === "fecha" && f.fecha < cal.iso(cal.ahora())) return aviso("La fecha no puede ser anterior a hoy"), null;
+    const fecha = f.duracion === "fecha" ? f.fecha : "";
+    return { persona: f.persona, texto, duracion: f.duracion, fecha, vence: venceRecordatorio({ ...f, fecha }) };
+}
+
+async function agregarRecordatorio() {
+    const nuevo = leerFormRecordatorio(estado.formRecordatorio);
+    if (!nuevo) return;
+    await datos.guardarEn("recordatorios", {
+        id: nuevoId("rec"), ...nuevo, autora: estado.persona, creado: cal.ahora().toISOString(), editado: ""
+    });
+    estado.formRecordatorio = formRecordatorioVacio();
+    aviso(nuevo.persona === estado.persona ? "Recordatorio guardado ✓ Te aparece en Hoy" : `Recordatorio guardado ✓ Le aparece a ${nombre(nuevo.persona)} en Hoy`, "ok");
+    render();
+}
+
+function editarRecordatorio(id) {
+    const r = buscarRecordatorio(id);
+    if (!r || !puedeEditarRecordatorio(r)) return;
+    estado.edicionRecordatorio = { ...formRecordatorioVacio(), ...r };
+    render();
+}
+
+async function guardarEdicionRecordatorio() {
+    const r = buscarRecordatorio(estado.edicionRecordatorio.id);
+    if (!r) {
+        estado.edicionRecordatorio = null;
+        render();
+        return aviso("Ese recordatorio ya no existe");
+    }
+    const cambios = leerFormRecordatorio(estado.edicionRecordatorio);
+    if (!cambios) return;
+    // Si no se cambió el tiempo, sigue desapareciendo cuando estaba previsto.
+    if (cambios.duracion === r.duracion && cambios.fecha === (r.fecha || "")) cambios.vence = r.vence;
+    const { uid, ...resto } = r;
+    await datos.guardarEn("recordatorios", { ...resto, ...cambios, editado: cal.ahora().toISOString() });
+    estado.edicionRecordatorio = null;
+    aviso("Recordatorio actualizado ✓", "ok");
+    render();
+}
+
+async function borrarRecordatorio(id) {
+    const r = buscarRecordatorio(id);
+    if (!r || !puedeEditarRecordatorio(r) || !confirm("¿Borrar este recordatorio?")) return;
+    await datos.borrarDe("recordatorios", id);
+    if (estado.edicionRecordatorio?.id === id) estado.edicionRecordatorio = null;
+    aviso("Recordatorio borrado");
 }
 
 // ---------- Vista: Bloc de notas (Agustina) ----------
